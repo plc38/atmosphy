@@ -2,7 +2,10 @@
 import glob
 import os
 import scipy
+import sqlite3
 
+def getDBPath():
+	return os.path.join(os.path.dirname(os.path.abspath(__file__)), 'conf.d','pycaskur.db3')
 
 
 class pyCasKur():
@@ -17,7 +20,7 @@ class pyCasKur():
         
         
     
-    def getNearestNeighbours(self, FeH=None, Teff=None, logg=None, level=1):
+    def getNearestNeighbours(self, model='caskur', FeH=None, Teff=None, logg=None, k=2.0, level=1):
     
         """
         
@@ -26,110 +29,77 @@ class pyCasKur():
         Parameters:
         ===========
         
-        FeH : float
+        FeH     : float
                 The metallicity ([Fe/H]) of the star you plan to interpolate for.
                 
-        Teff : float
-                The effective temperature (Teff) of the star you plan to interpolate for.
+        Teff    : float
+                The effective temperature (Teff in Kelvin) of the star you plan to interpolate for.
         
-        logg : float
+        logg    : float
                 The surface gravity (log g) of the star you plan to interpolate for.
-    
+                
+        k       : float
+                The turbulence in the atmosphere of the star (km/s).
         """
         
-        
-        # This assumes that the Cas-Kuz models are in the appropriate format for parsing between
-        # That is:
-        
-        # a[p|m][0-9]{2}k[0-9]{1,}.dat
-
-        
-        models = glob.glob(self.folder + 'a[m|p]*k[0-9].dat')
 
         if (1 > level):
             raise ValueError, 'level must be a positive integer'
 
+        
 
-        # point must be specified in [Fe/H], Teff, Gravity (for computational efficiency)
+        connection = sqlite3.connect(getDBPath())
     
-
+        result = connection.execute('select feh, teff, logg from %s' % modelName)
+        FeH_grid, Teff_grid, logg_grid = zip(*result.fetchall())
         
-        # We want to find all the FeH points from the filenames
+        grid = zip(FeH_grid, Teff_grid, logg_grid)
         
-        FeH_available = [None] * len(models)
-        modelFiles = [None] * len(models)
-        
-        for i, model in enumerate(models):
-            modelFiles[i] = model
-            
-            model = os.path.basename(model)
-            
-            FeH_available[i] = eval(model[1:4].replace('m', '-').replace('p', '+'))/10.
-        
-        
-        
-        
-        # We want to grep through all the files and get the possible points for the grid.
-        # Then we will use a spatial KDD Tree to find the N closest neighbours.        
-                    
-        # Generate our grid, which will be [FeH, Teff, logg]
-        grid = []
-        
-        # Look in each of our model files and grab the Teff's and logg's
-        for FeH_point, modelFile in zip(FeH_available, modelFiles):
-
-            
-            data = file(modelFile, 'r')
-            matches = self.__grep('TEFF\s+[0-9.]+\s+GRAVITY\s+[0-9.]+\s+LTE', data)
-
-            for patternMatch in matches:
-                number, line = patternMatch
-                line = re.split('\s+', line)
-                
-                grid.append([FeH_point, float(line[1]), float(line[3])])
-
         
         # Find the nearest N levels of indexedFeHs
-        FeH_grid = self.__getLevels(FeH_available, FeH, level=level)
+        FeH_nearest  = self.__getLevels(FeH_grid, FeH, level=level)
 
         # Find the Teff available for our FeH possibilites
-        Teff_available = [point[1] for point in grid if point[0] in FeH_grid]
+        Teff_available = [point[1] for point in grid if point[0] in FeH_nearest]
 
         # Find the nearest N levels of Teff_available to Teff
-        Teff_grid = self.__getLevels(Teff_available, Teff, level=level)
+        Teff_nearest = self.__getLevels(Teff_available, Teff, level=level)
         
         # Find the logg available for our FeH and Teff possibilities
-        logg_available = [point[2] for point in grid if point[0] in FeH_grid and point[1] in Teff_grid]
+        logg_available = [point[2] for point in grid if point[0] in FeH_nearest and point[1] in Teff_nearest]
         
         # Find the nearest N levels of logg_available to logg
-        logg_grid = self.__getLevels(logg_available, logg, level=level)
+        logg_nearest = self.__getLevels(logg_available, logg, level=level)
 
-    
-        # Generate the sql statement
-
-        query = """select * from table where feh    between '%f' and '%f' 
-                                         and teff   between '%f' and '%f'
-                                         and logg   between '%f' and '%f'""" % (min(FeH_grid), max(FeH_grid), min(Teff_grid), max(Teff_grid), min(logg_grid), max(logg_grid))
+        # Grab back the filenames of these grid points
         
-        return query
+        gridLimits = tuple([min(FeH_nearest), max(FeH_nearest), min(Teff_nearest), max(Teff_nearest), min(logg_nearest), max(logg_nearest)])
+        result = connection.execute('select filename, feh, teff, logg from %s where feh between ? and ? and teff between ? and ? and logg between ? and ?' % modelName, gridLimits)
+       
+       
+        
+        return result.fetchall()
+       
+        
+        
                                         
             
             
     def __getLevels(self, data, point, level=1):
         """
         
-        Returns closest neighbours on either side of the point provided..
+        Returns closest neighbours on either side of the point provided.
 
         Parameters:
         ===========
         
-        data : array
+        data    : array
                 The data points used to find neighbours from.
                 
-        point : float
+        point   : float
                 The point used to look for neighbours.
                 
-        level : integer, optional
+        level   : integer, optional
                 The number of neighbours to find on either side of the point.
         """
         
@@ -189,11 +159,11 @@ class pyCasKur():
             
 if __name__ == "__main__":
     t = pyCasKur('../kurucz_models/')
-    found = t.getNearestNeighbours(-0.25, logg=3.1, Teff=8100., level=2)
+    found = t.getNearestNeighbours(FeH=-0.25, logg=3.1, Teff=8100., level=1)
             
             
             
-        
+    
         
         
             
