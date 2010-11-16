@@ -1,7 +1,8 @@
 import sqlite3
 import os
 
-
+def getDBPath():
+	return os.path.join(os.path.dirname(os.path.abspath(__file__)), 'conf.d','pycaskur.db3')
 
 class modelDB():
 
