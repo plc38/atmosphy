@@ -6,7 +6,7 @@ import pdb
 import os
 import sqlite3
 from glob import glob
-
+import numpy as np
 import initialize
 
 class casKurImportException(Exception):
@@ -14,7 +14,7 @@ class casKurImportException(Exception):
 
 def casKurImportModel(modelName, srcPath, dstPath = None):
 	if dstPath == None:
-		dstPath = os.path.join(os.path.realpath('~/pycaskur/'),modelName)
+		dstPath = os.path.join(os.path.expanduser('~/.pycaskur/'),modelName)
 		if not os.path.exists(dstPath):
 			os.makedirs(dstPath)
 	modelData = casKurSplitModel(srcPath,dstPath)
@@ -30,10 +30,10 @@ def casKurImportModel(modelName, srcPath, dstPath = None):
     										logg DOUBLE,
     										feh DOUBLE)"""%modelName
 	conn.execute(initModelTable)
-	pdb.set_trace()
+
 	for model in modelData:
 		conn.execute('insert into %s values (?,?,?,?)'%modelName,tuple(model))
-	pdb.set_trace()
+
 	conn.commit()
 	conn.close()
 
@@ -78,6 +78,21 @@ def getNextLine(dataIter):
 	except:
 		raise casKurImportException('End of File before model end')
 
+def readDeck(filePath):
+	data = []
+	rawIter = iter(file(filePath))
+	deckStart = "READ DECK6"
+	while True:
+		line = getNextLine(rawIter)
+		if line.startswith(deckStart): break
+		
+	while True:
+			line = getNextLine(rawIter)
+			if line.startswith("PRADK"):
+#				self.pradk = float(line.split()[1])
+				break
+			data.append([float(item) for item in line.split()])
+	return np.array(data)
 	
 class casKurModel(object):
 	#Parsing a single caskur model and storing it in a datastructure
@@ -117,7 +132,7 @@ class casKurModel(object):
 				self.pradk = float(line.split()[1])
 				break
 			data.append([float(item) for item in line.split()])
-		self.data = array(data)
+		self.data = np.array(data)
 		
 
 			
