@@ -160,9 +160,10 @@ class modelDB():
                              'GRIDP05ODFNEW',
                              'GRIDP05AODFNEW',
                              'GRIDP10',
-                             'GRIDHBETA',
+                             #'GRIDHBETA',          -- returned a 404
                              'GRIDHBETACASTELLI'
                          ]
+                         
                       
         if (type(modelNames) == type(str())): modelNames = [modelNames]
         
@@ -172,6 +173,18 @@ class modelDB():
             
         # Download all the model name files and for each one, create the directory in the .pycaskur database
 
+        for modelName in modelStack:
+            
+            url = 'HTTP://KURUCZ.harvard.edu/grids/' + modelName.replace('GRIDM', 'gridm').replace('GRID', 'grid')
+            
+            # List the index of that directory, look for the .dat file
+            
+            stream = urllib2.urlopen(url)
+            html = stream.read()
+            
+            
+            print modelName, url
+            print html
     
     def populate(self, modelName, dbPath=None, directory=os.getcwd() + '/', wildmask='*.dat', verbose=False):
         """
