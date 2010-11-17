@@ -7,7 +7,6 @@ import pdb
 import fileio
 import initialize
 
-readModelFrom
 
 def getInterpModels(dimensions, modelwhereSQLStatement, gridData, ):
 	
@@ -96,11 +95,7 @@ def getNearestNeighbours(model, Teff, logg, FeH, k=2.0, alpha=0.0, level=1):
     # Build the dimensions we want back from the SQL table
     
     gridLimits = []
-<<<<<<< local
     dimensions = ['filename']
-=======
-    dimensions = ['id']
->>>>>>> other
     
     availableDimenstions = {    
                             'feh'   : FeH_neighbours,
@@ -122,18 +117,11 @@ def getNearestNeighbours(model, Teff, logg, FeH, k=2.0, alpha=0.0, level=1):
         
     # String it all together        
     whereSql = ' between ? and ? '.join(dimensions) + ' between ? and ?'
-    #dimensions = ', '.join(dimensions)
+    dimensions = ', '.join(dimensions)
 
     # Execute and return the SQL
-<<<<<<< local
     result = connection.execute('select %s from %s where %s' % (dimensions, model, whereSql), gridLimits)
     return result.fetchall()
-=======
-    return (dimensions, model, whereSql, gridLimits)
-    
-    #result = connection.execute('select %s from %s where %s' % (dimensions, model, whereSql), gridLimits)
-    #return result.fetchall()
->>>>>>> other
    
     
     
