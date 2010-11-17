@@ -33,9 +33,8 @@ def interpModelGrid(modelName, Teff, logg, FeH, k=2.0, alpha = 0.0):
 
 	dimensions, whereSQLStatement, gridLimits = getNearestNeighbours(modelName, Teff, logg, FeH, k, alpha)
 	
-	fileNames = zip(*modelData)[0]
-	modelGridCoord = np.array(zip(*modelData)[1:]).transpose()
-	modelGrid = getInterpModels(dimensions, whereSQLStatement, gridData)
+
+	modelGridCoord, modelGrid = getInterpModels(dimensions, whereSQLStatement, gridData)
 
 	return interpolate.griddata(modelGridCoord, modelGrid, (Teff, logg, FeH),method='linear')
 	
