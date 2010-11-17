@@ -110,7 +110,7 @@ def getNearestNeighbours(model, Teff, logg, FeH, k=2.0, alpha=0.0, level=1):
     # Build the dimensions we want back from the SQL table
     
     gridLimits = []
-    dimensions = ['id']
+    dimensions = []
     
     availableDimensions = {    
                             'feh'   : FeH_neighbours,
@@ -132,7 +132,7 @@ def getNearestNeighbours(model, Teff, logg, FeH, k=2.0, alpha=0.0, level=1):
         
         
     # String it all together        
-    whereSql = ' from %s where ' % modelName + ' between ? and ? '.join(dimensions) + ' between ? and ?'
+    whereSql = ' from %s where ' % model + ' between ? and ? '.join(dimensions) + ' between ? and ?'
     #dimensions = ', '.join(dimensions)
 
     # Execute and return the SQL
