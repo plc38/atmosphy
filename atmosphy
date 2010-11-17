@@ -25,15 +25,13 @@ parser.add_argument("-feh",
 
 
 parser.add_argument("--modelgrid",
-					help="Name of modelgrid default=%(default) ",
-					 type=str,
-					 default="normal kurucz")
+					help="Name of modelgrid default=%(default)s",
+					 default="normal")
 					 
 parser.add_argument("--showgrids",
 					help="Show all modelgrids\
 					 (available on the web and on disk)",
-					 type=float,
-					 required=True)
+					 action='store_true')
 
 args = parser.parse_args()
 
