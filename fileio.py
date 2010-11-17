@@ -8,23 +8,30 @@ import sqlite3
 from glob import glob
 import numpy as np
 import initialize
+import urllib2
 
 class casKurImportException(Exception):
 	pass
 
-def casKurImportModel(modelName, srcPath, dstPath = None):
+def importModel(modelName, srcPath, dstPath = None, overwrite=False, verbose=False):
 	if dstPath == None:
-		dstPath = os.path.join(os.path.expanduser('~/.pycaskur/'),modelName)
-		if not os.path.exists(dstPath):
-			os.makedirs(dstPath)
-	modelData = casKurSplitModel(srcPath,dstPath)
-	dbPath = initialize.getDBPath()
+		dstPath = initialize.atmosStoragePath(modelName)
+
+    # Check to see if the destination path exists
+    if not os.path.exists(dstPath):
+        os.makedirs(dstPath)
+	modelData = splitModel(srcPath,dstPath)
+	dbPath = initialize.atmosStoragePath('atmosphy.db3')
 	conn = sqlite3.connect(dbPath)
 	
 	if len(conn.execute("	SELECT name FROM sqlite_master \
 					WHERE type='table' AND \
 					name='%s'"%modelName).fetchall()) == 1:
-					raise Exception('test')
+					
+                        if overwrite:
+                            # clear the table
+                            raise Exception, 'test'
+
 	initModelTable = """CREATE TABLE %s(filename STRING, 
     										teff DOUBLE,
     										logg DOUBLE,
@@ -36,15 +43,17 @@ def casKurImportModel(modelName, srcPath, dstPath = None):
 
 	conn.commit()
 	conn.close()
+	
+	return True
 
-def casKurSplitModel(srcPath,dstPath):
+def splitModel(srcPath,dstPath):
 	"""Imports the standard CasKur Modelgrid from srcPath and writes single files to dstPath"""
 	srcPath = os.path.abspath(srcPath)
 	dstPath = os.path.abspath(dstPath)
 	modelData = []
 	for fname in glob(os.path.join(srcPath,'*.dat')):
 		modelSrc = file(fname).read()
-		modelsRawData = re.split('BEGIN\s+ITERATION\s+\d+\s+COMPLETED',modelSrc)
+		modelsRawData = re.split('EGIN\s+ITERATION\s+\d+\s+COMPLETED',modelSrc)
 		metalMatch = re.search('a([mp]?\d+)',fname)
 		if metalMatch == None: raise casKurImportException("Can't determine metallicity from filename, searching for a([mp]?\d+)")
 
@@ -56,7 +65,7 @@ def casKurSplitModel(srcPath,dstPath):
 			#problem with split
 			if model == '\n': continue
 			
-			teffLoggMatch = re.search('TEFF\s+(\d+\.\d*)\s+GRAVITY\s+(\d+\.\d*)\s+(\w+)\s*',model)
+			teffLoggMatch = re.search('EFF\s+(\d+\.\d*)\s+GRAVITY\s+(\d+\.\d*)\s+(\w+)\s*',model)
 			if teffLoggMatch == None:
 				raise casKurImportException("Current Model does not contain effective\
 				 temperature:\n\n--------\n\n%s"%model)
@@ -84,11 +93,11 @@ def readDeck(filePath):
 	deckStart = "READ DECK6"
 	while True:
 		line = getNextLine(rawIter)
-		if line.startswith(deckStart): break
+		if line.startswith(deckStart): break # perhaps use regex so that it can pick up when the R is missing from READ DECK6? AC
 		
 	while True:
 			line = getNextLine(rawIter)
-			if line.startswith("PRADK"):
+			if line.startswith("PRADK"): # as above AC
 #				self.pradk = float(line.split()[1])
 				break
 			data.append([float(item) for item in line.split()])
@@ -121,22 +130,151 @@ class casKurModel(object):
 				self.modelType = tempLoggMatch.groups()[2]
 				break
 		#Looking for Deck
-		deckStart = "READ DECK6"
+		deckStart = "READ DECK6" # match EAD DECK6?
 		while True:
 			line = getNextLine(rawIter)
 			if line.startswith(deckStart): break
 			
 		while True:
 			line = getNextLine(rawIter)
-			if line.startswith("PRADK"):
+			if line.startswith("PRADK"): # match RADK?
 				self.pradk = float(line.split()[1])
 				break
 			data.append([float(item) for item in line.split()])
 		self.data = np.array(data)
 		
 
-			
-		
 
-				
+  
+  
+def download(modelNames, overwrite=False, verbose=True, dbPath=initialize.atmosStoragePath('atmosphy.db3')):
+
+    """
+    Download the given model(s) from the Kurucz website and load them into your database.
+    
+    Parameters:
+    ===========
+    
+    modelNames  :   string or list
+                    Downloads all of the model names suppled, or any that match the wildmask supplied.
+    
+                    
+    Available models:
+    =================
+    
+        Kurucz          :   Kuruczs grids of model atmospheres, as described in X
+        
+        Kurucz-NOVER    :   Kurucz models with no convective overshooting computed by Fiorella Castelli
+                            [castelli@ts.astro.it] in Trieste. The convective treatment is described in
+                            Castelli, Gratton, and Kuruczs 1997, A&A 328, 841.
+                            
+        Kurucz-ODFNEW   :   Kurucz models as NOVER but with newly computed ODFs with better opacities
+                            and better abundances.
+                            
+        Kurucz-AODFNEW  :   Kurucz models as per ODFNEW but with Alpha enhancement. The alpha-process
+                            elements (O, Ne, Mg, Si, S, Ar, Ca, and Ti) enhanced by +0.4 in the log and
+                            Fe -4.53
+
+    
+    
+    Examples:
+    =========
+    
+        download('Kurucz')          :   Download the standard Kurucz grid models.
+        
+        download('Kurucz-*ODFNEW')  :   This will download both the Kurucz-AODFNEW and the Kurucs-ODFNEW
+                                        model as they both match the wildmask given.
+
+    """
+
+    import fnmatch
+    from ConfigParser import ConfigParser
+    
+    modelsPath = initialize.atmosStoragePath('models/')
+    configFilename = initialize.atmosStoragePath('conf.d')
+    
+    parser = ConfigParser()
+    if not os.path.exists(dbPath): raise ValueError, 'no database file found in %s' % dbPath
+    if not os.path.exists(configFilename): raise ValueError, 'no configuration file found in %s' % configFilename
+    
+    parser.read(configFilename)
+    
+    # Get all the available model names from our configuration file
+    availableModels = parser.options('models')
+                  
+    if (type(modelNames) == type(str())): modelNames = [modelNames]
+    
+    # Find all the models that match our wildmask given
+    
+    modelMatches = []
+    for modelName in modelNames:
+        modelMatches = modelMatches + fnmatch.filter(availableModels, modelName.lower())
+    
+    
+    if (1 > len(modelMatches)): raise ValueError, 'no models found.'
+    
+    # Get the regular expression patterns for each model name
+    
+    modelStacks = {}
+    
+    for modelMatch in modelMatches:
+        modelStacks[modelMatch] = parser.get('models', modelMatch).strip('"\'').split()
+
+    
+    # Get all the model files we need
+    
+    for modelName, modelFiles in modelStacks.iteritems():
+    
+        
+        if verbose:
+            print 'Entering %s' % modelName
+        
+        # Generate the models directory if it doesn't exist
+        if not os.path.exists(modelsPath):
+            if verbose:
+                print 'Creating %s' % modelsPath
+                
+            os.makedirs(modelsPath)
+        
+        # Generate this specific model directory if it doesn't exist
+        if not os.path.exists(os.path.join(modelsPath, modelName)):
+            if verbose:
+                print 'Creating %s' % modelsPath + modelName
+            
+            os.makedirs(os.path.join(modelsPath,modelName))
+
+        
+        for modelFile in modelFiles:
+    
+            # Check to see if this file already exists
+            fullPath = os.path.join(modelsPath, modelName, modelFile.split('/')[-1])
+            fileExists = os.path.exists(fullPath)
+            
+            if (overwrite and fileExists) or not fileExists:
+                
+                if verbose and not fileExists: print 'Writing %s from %s' % (fullPath, modelFile)
+                if fileExists:
+                    if verbose: print 'Over-writing %s with %s' % (fullPath, modelFile)
+                    os.remove(fullPath)
+                    
+                stream = urllib2.urlopen(modelFile)
+                data = stream.read()
+                stream.close()
+                
+
+                
+                newFile = open(fullPath, 'w')
+                newFile.write(data)
+                newFile.close()
+		
+        
+        # Import the model into the database
+        srcPath = os.path.join(modelsPath, modelName)
+        dstPath = os.path.join(srcPath, 'split')
+        
+        importModel(modelName, srcPath, dstPath, overwrite=overwrite, verbose=verbose)
+
+    
+    
+
 	
