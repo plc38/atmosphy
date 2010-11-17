@@ -53,32 +53,50 @@ def splitModel(srcPath, dstPath, overwrite=False, verbose=False):
 	modelData = []
 	for fname in glob(os.path.join(srcPath,'*.dat')):
 		modelSrc = file(fname).read()
-		modelsRawData = re.split('EGIN\s+ITERATION\s+\d+\s+COMPLETED',modelSrc)
-		metalMatch = re.search('a([mp]?\d+)',fname)
-		if metalMatch == None: raise casKurImportException("Can't determine metallicity from filename, searching for a([mp]?\d+)")
+		modelsRawData = re.split('B?EGIN\s+ITERATION\s+\d+\s+COMPLETED',modelSrc)
 
-		metallicity = -.1*float(metalMatch.groups()[0][1:])\
-						 if metalMatch.groups()[0][0]=='m'\
-						 else .1*float(metalMatch.groups()[0][1:]) 
 						 
 		for model in modelsRawData:
 			#problem with split
 			if model == '\n': continue
 			
-			teffLoggMatch = re.search('EFF\s+(\d+\.\d*)\s+GRAVITY\s+(\d+\.\d*)\s+(\w+)\s*',model)
-			if teffLoggMatch == None:
-				raise casKurImportException("Current Model does not contain effective\
-				 temperature:\n\n--------\n\n%s"%model)
-				 
-			teff = float(teffLoggMatch.groups()[0])
-			logg = float(teffLoggMatch.groups()[1])
+			teffLoggMatch = re.search('T?EFF\s+(\d+\.\d*)\s+GRAVITY\s+(\d+\.\d*)',model)
 			
-			newFName = "teff%.2f_logg%.3f_feh%.3f.dat"%(teff,logg,metallicity)
+			#searching for metallicity, alpha and microturbulence
+			metalAlphaMatch = re.search('\[([+-]?\d+\.\d+)([ab]?)\]', model)
+			microMatch = re.search('VTURB[ =]?(\d+\.\d+)',model)
+			mixLengthMatch = re.search('L/H[ =]?(\d+\.\d+)',model)
+			
+			#Checking the integrity of the model
+			
+			if teffLoggMatch == None:
+			
+				raise casKurImportException("Current\
+				 Model does not contain effective\
+				 temperature:\n\n--------\n\n%s"%model)
+			
+			if metalAlphaMatch == None:
+			
+				raise casKurImportException("Current\
+				 Model does not contain metallicity \
+				 information:\n\n--------\n\n%s"%model)
+			
+			#reading in the model parameters
+			convertAlpha = {'':0.0, 'a':0.4, 'b':1.0}
+			
+			teff	= float(teffLoggMatch.groups()[0])
+			logg 	= float(teffLoggMatch.groups()[1])
+			feh		= float(metalAlphaMatch.groups()[0])
+			alpha 	= float(metalAlphaMatch.groups()[0])
+			mixing 	= convertAlpha[metalAlphaMatch.groups()[0]]
+			
+			#writing to file
+			newFName = "teff%.2f_logg%.3f_feh%.3f_alpha%.2f_.dat_lh%.2f"%(teff, logg, feh, alpha, mixing)
 			if verbose:
 				print "Writing %s"%newFName
 			newFPath = os.path.join(dstPath,newFName)
 			file(os.path.join(dstPath,newFName),'w').write(model)
-			modelData.append([os.path.join(dstPath,newFName),teff,logg,metallicity])
+			modelData.append([os.path.join(dstPath,newFName),teff,logg,feh,alpha,mixing])
 	return modelData
 		
 	
