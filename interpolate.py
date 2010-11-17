@@ -4,11 +4,18 @@ import glob
 import os
 import sqlite3
 import pdb
+
 import fileio
 import initialize
+import modeldb
 
-
-def getInterpModels(dimensions, modelwhereSQLStatement, gridData, ):
+def getInterpModels(dimensions, whereSQLStatement, gridData):
+	
+	conn = modeldb.getModelDBConnection()
+	
+	positions = conn.execute('select %s whereSQLStatement' %
+							 (dimensions,)).fetchall()
+	positions = conn.execute('select deck whereSQLStatement')
 	
 	modelGrid = []
 	for fname in fileNames:
