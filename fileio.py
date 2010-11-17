@@ -79,6 +79,7 @@ def importModel(modelName, srcPath, dstPath = None, clobber=False, overwrite=Fal
 		logg 	= float(teffLoggMatch.groups()[1])
 		feh		= float(metalAlphaMatch.groups()[0])
 		alpha 	= convertAlpha[metalAlphaMatch.groups()[1]]
+		micro	= float(microMatch.groups()[0])
 		mixing 	= float(mixLengthMatch.groups()[1])
 		pradk	= float(pradkMatch.groups()[0])
 		
@@ -87,7 +88,7 @@ def importModel(modelName, srcPath, dstPath = None, clobber=False, overwrite=Fal
 		zipdDeck = zlib.compress(pickle.dumps(deck))
 		
 		#writing to db
-		modeldb.insertModelData(conn, modelName, [teff, logg, feh, alpha, mixing, pradk, zipdDeck])
+		modeldb.insertModelData(conn, modelName, [teff, logg, feh, micro, alpha, mixing, pradk, zipdDeck])
 		
 	conn.commit()
 	conn.close()
@@ -115,7 +116,7 @@ def readDeck(modelString):
 	while True:
 			line = getNextLine(rawIter)
 			
-			if re.match("^PRADK.*",line) != None:
+			if re.match("^P?RADK.*",line) != None:
 				break
 			data.append([float(item) for item in line.split()])
 	return np.array(data)
