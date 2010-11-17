@@ -4,6 +4,7 @@ import glob
 import os
 import sqlite3
 import cPickle as pickle
+import zlib
 
 import fileio
 import initialize
@@ -13,22 +14,21 @@ def getInterpModels(dimensions, whereSQLStatement, gridLimits):
 	
 	conn = modeldb.getModelDBConnection()
 	
-	positions = conn.execute('select %s %s' %
-							 (whereSQLStatement, dimensions,)
-							 ,gridLimits).fetchall()
+	positions = conn.execute('select %s %s' % 
+			(dimensions, whereSQLStatement,), gridLimits).fetchall()
 	binaryDecks = conn.execute('select deck %s' % (whereSQLStatement,),
-								gridLimits)
+								gridLimits).fetchall()
 
 	conn.close()
 	
 	modelGrid = []
 	for binDeck in binaryDecks:
-		deck = pickle.loads(zlib.decompress(binDeck))
+		deck = pickle.loads(zlib.decompress(binDeck[0]))
 		modelGrid.append(deck)
 		
 	
 	
-	return np.array(modelGrid)
+	return positions, np.array(modelGrid)
 
 
 def interpModelGrid(modelName, Teff, logg, FeH, k=2.0, alpha = 0.0):
@@ -37,8 +37,8 @@ def interpModelGrid(modelName, Teff, logg, FeH, k=2.0, alpha = 0.0):
 	
 
 	modelGridCoord, modelGrid = getInterpModels(dimensions, whereSQLStatement, gridLimits)
-
-	return interpolate.griddata(modelGridCoord, modelGrid, (Teff, logg, FeH),method='linear')
+	return interpolate.griddata(modelGridCoord, modelGrid,
+			 (Teff, logg, FeH), method='linear')
 	
 	
 def getNearestNeighbours(model, Teff, logg, FeH, k=2.0, alpha=0.0, level=1):
@@ -110,8 +110,8 @@ def getNearestNeighbours(model, Teff, logg, FeH, k=2.0, alpha=0.0, level=1):
     # Build the dimensions we want back from the SQL table
     
     gridLimits = []
-    dimensions = ['id']
-    
+    dimensions = []
+    indexDimensions = ['teff', 'logg', 'feh', 'k', 'alpha']
     availableDimensions = {    
                             'feh'   : FeH_neighbours,
                             'teff'  : Teff_neighbours,
@@ -120,8 +120,9 @@ def getNearestNeighbours(model, Teff, logg, FeH, k=2.0, alpha=0.0, level=1):
                             'alpha' : alpha_neighbours,
                             }
                             
-    for dimension, neighbours in availableDimensions.iteritems():
-    
+    for dimension in indexDimensions:
+    	neighbours = availableDimensions[dimension]
+    		
         # If only one 'neighbour' is present, then this dimension does not need to be interpolated upon
         if (len(neighbours) > 1):
             dimensions.append(dimension)
@@ -132,11 +133,11 @@ def getNearestNeighbours(model, Teff, logg, FeH, k=2.0, alpha=0.0, level=1):
         
         
     # String it all together        
-    whereSql = ' from %s where ' % modelName + ' between ? and ? '.join(dimensions) + ' between ? and ?'
-    #dimensions = ', '.join(dimensions)
+    whereSql = 'from %s where ' % model + ' between ? and ? and '.join(dimensions) + ' between ? and ?'
+    dimensions = ', '.join(dimensions)
 
     # Execute and return the SQL
-    return (dimensions, whereSql, gridLimits)
+    return (dimensions, whereSql, tuple(gridLimits))
     
     #result = connection.execute('select %s from %s where %s' % (dimensions, model, whereSql), gridLimits)
     #return result.fetchall()
