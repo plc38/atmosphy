@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import os
 from distutils.core import setup
 
 try: # Python 3.x
@@ -15,6 +16,10 @@ setup(name='atmosphy',
       author_email='wkerzendorf@mso.anu.edu.au, \
         acasey@mso.anu.edu.au',
       url='',
-      packages = ['atmosphy'],
+      packages = [''],
+      package_dir = {'':'src'},
       cmdclass = {'build_py':build_py},
+      data_files = [('~/.atmosphy', 'conf.d')]
      )
+
+
