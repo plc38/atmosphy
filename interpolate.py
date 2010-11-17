@@ -65,9 +65,9 @@ def getNearestNeighbours(model, Teff, logg, FeH, k=2.0, alpha=0.0, level=1):
     result = connection.execute('select feh, teff, logg, k, alpha from %s' % model)
     
     # todo - consider rewriting following section into a loop?
-    FeH_grid, Teff_grid, logg_grid = zip(*result.fetchall())
+    FeH_grid, Teff_grid, logg_grid, k_grid, alpha_grid = zip(*result.fetchall())
     
-    grid = zip(Teff_grid, logg_grid, FeH_grid)
+    grid = zip(Teff_grid, logg_grid, FeH_grid, k_grid, alpha_grid)
     
     
     # Find the nearest N levels of indexedFeHs
@@ -93,7 +93,7 @@ def getNearestNeighbours(model, Teff, logg, FeH, k=2.0, alpha=0.0, level=1):
     # Build the dimensions we want back from the SQL table
     
     gridLimits = []
-    dimensions = ['filename']
+    dimensions = ['filename', 'deck']
     
     availableDimenstions = {    
                             'feh'   : FeH_neighbours,
@@ -118,6 +118,7 @@ def getNearestNeighbours(model, Teff, logg, FeH, k=2.0, alpha=0.0, level=1):
     dimensions = ', '.join(dimensions)
 
     # Execute and return the SQL
+    
     result = connection.execute('select %s from %s where %s' % (dimensions, model, whereSql), gridLimits)
     return result.fetchall()
    
