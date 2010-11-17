@@ -18,8 +18,8 @@ def importModel(modelName, srcPath, dstPath = None, overwrite=False, verbose=Fal
 		dstPath = initialize.atmosStoragePath(modelName)
 
     # Check to see if the destination path exists
-    if not os.path.exists(dstPath):
-        os.makedirs(dstPath)
+	if not os.path.exists(dstPath):
+		os.makedirs(dstPath)
 	modelData = splitModel(srcPath,dstPath)
 	dbPath = initialize.atmosStoragePath('atmosphy.db3')
 	conn = sqlite3.connect(dbPath)
@@ -46,7 +46,7 @@ def importModel(modelName, srcPath, dstPath = None, overwrite=False, verbose=Fal
 	
 	return True
 
-def splitModel(srcPath,dstPath):
+def splitModel(srcPath, dstPath, overwrite=False, verbose=False):
 	"""Imports the standard CasKur Modelgrid from srcPath and writes single files to dstPath"""
 	srcPath = os.path.abspath(srcPath)
 	dstPath = os.path.abspath(dstPath)
@@ -74,7 +74,8 @@ def splitModel(srcPath,dstPath):
 			logg = float(teffLoggMatch.groups()[1])
 			
 			newFName = "teff%.2f_logg%.3f_feh%.3f.dat"%(teff,logg,metallicity)
-			print "Writing %s"%newFName
+			if verbose:
+				print "Writing %s"%newFName
 			newFPath = os.path.join(dstPath,newFName)
 			file(os.path.join(dstPath,newFName),'w').write(model)
 			modelData.append([os.path.join(dstPath,newFName),teff,logg,metallicity])

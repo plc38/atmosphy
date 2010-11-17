@@ -24,7 +24,7 @@ def interpModelGrid(Teff, logg, FeH, modelName):
 	return interpolate.griddata(modelGridCoord, modelGrid, (Teff, logg, FeH),method='linear')
 	
 	
-def getNearestNeighbours(model='caskur', Teff=None, logg=None, FeH=None, k=2.0, level=1):
+def getNearestNeighbours(model, Teff, logg, FeH, k=2.0, alpha=0.0, level=1):
 
     """
     
@@ -61,39 +61,68 @@ def getNearestNeighbours(model='caskur', Teff=None, logg=None, FeH=None, k=2.0, 
 
     connection = sqlite3.connect(initialize.getDBPath())
 
-    result = connection.execute('select feh, teff, logg from %s' % model)
+    result = connection.execute('select feh, teff, logg, k, alpha from %s' % model)
+    
+    # todo - consider rewriting following section into a loop?
     FeH_grid, Teff_grid, logg_grid = zip(*result.fetchall())
     
     grid = zip(Teff_grid, logg_grid, FeH_grid)
     
     
     # Find the nearest N levels of indexedFeHs
-    FeH_nearest  = get1Dneighbours(FeH_grid, FeH, level=level)
+    FeH_neighbours  = get1Dneighbours(FeH_grid, FeH, level=level)
 
     # Find the Teff available for our FeH possibilites
-    Teff_available = [point[0] for point in grid if point[2] in FeH_nearest]
-
-    # Find the nearest N levels of Teff_available to Teff
-    Teff_nearest = get1Dneighbours(Teff_available, Teff, level=level)
+    Teff_available = [point[0] for point in grid if point[2] in FeH_neighbours]
+    Teff_neighbours = get1Dneighbours(Teff_available, Teff, level=level)
     
     # Find the logg available for our FeH and Teff possibilities
-    logg_available = [point[1] for point in grid if point[2] in FeH_nearest and point[0] in Teff_nearest]
+    logg_available = [point[1] for point in grid if point[2] in FeH_neighbours and point[0] in Teff_neighbours]
+    logg_neighbours = get1Dneighbours(logg_available, logg, level=level)
     
-    # Find the nearest N levels of logg_available to logg
-    logg_nearest = get1Dneighbours(logg_available, logg, level=level)
+    # Find the k available for our FeH, Teff, and logg restricted 
+    k_available = [point[3] for point in grid if point[2] in FeH_neighbours and point[0] in Teff_neighbours and point[1] in logg_neighbours]
+    k_neighbours = get1Dneighbours(k_available, k, level=level)
+    
+    # Find the alpha available for our FeH, Teff, logg, and k restricted
+    alpha_available = [point[4] for point in grid if point[1] in FeH_neighbours and point[0] in Teff_neighbours and point[1] in logg_neighbours and point[3] in k_neighbours]
+    alpha_neighbours = get1Dneighbours(alpha_available, alpha, level=level)
+    
+    
+    # Build the dimensions we want back from the SQL table
+    
+    gridLimits = []
+    dimensions = ['filename']
+    
+    availableDimenstions = {    
+                            'feh'   : FeH_neighbours,
+                            'teff'  : Teff_neighbours,
+                            'logg'  : logg_neighbours,
+                            'k'     : k_neighbours,
+                            'alpha' : alpha_neighbours,
+                            }
+                            
+    for dimension, neighbours in availableDimensions.iteritems():
+    
+        # If only one 'neighbour' is present, then this dimension does not need to be interpolated upon
+        if (len(neighbours) > 1): dimensions.append(dimension)
+        
+        # Add these limits for the sql query
+        gridLimits.append(min(neighbours))
+        gridLimits.append(max(neighbours))
+        
+        
+    # String it all together        
+    whereSql = ' between ? and ? '.join(dimensions) + ' between ? and ?'
+    dimensions = ', '.join(dimensions)
 
-    # Grab back the filenames of these grid points
-    
-    gridLimits = tuple([min(FeH_nearest), max(FeH_nearest), min(Teff_nearest), max(Teff_nearest), min(logg_nearest), max(logg_nearest)])
-    result = connection.execute('select filename, teff, logg, feh from %s where feh between ? and ? and teff between ? and ? and logg between ? and ?' % model, gridLimits)
-   
-   
-    
+    # Execute and return the SQL
+    result = connection.execute('select %s from %s where %s' % (dimensions, model, whereSql), gridLimits)
     return result.fetchall()
    
     
     
-                                    
+                                   
         
         
 def get1Dneighbours(data, point, level=1):
@@ -125,6 +154,10 @@ def get1Dneighbours(data, point, level=1):
     
     pos = filter(lambda x: x > 0, offset)
     neg = filter(lambda x: x < 0, offset)
+    
+    # If there are none positive, or none negative then this point is outside the bounds of the grid
+    if (1 > len(pos)) or (1 > len(neg)):
+        raise atmosphyOutOfBoundsError, 'the given data point (%2.4f) is outside the bounds of the grid' % point
 
     # We may have duplicates of the same value, which is screwy with levels
 
@@ -138,3 +171,7 @@ def get1Dneighbours(data, point, level=1):
     neighbours.sort()
     
     return neighbours
+
+
+class atmosphyOutOfBoundsError():
+    pass

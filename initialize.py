@@ -22,7 +22,7 @@ class modelDB():
     										model_ondisk BOOL DEFAULT 0)"""
     	
     	if os.path.exists(dbPath): print "Warning: Overwriting database"
-    	print 'test'
+
     	connection = sqlite3.connect(os.path.abspath(dbPath))
     	connection.execute(initModelsTable)
     	connection.close()
@@ -33,6 +33,8 @@ class modelDB():
 
 
 
+    # todo - need to make something that installs the conf.d file
+    
     
     
 										
