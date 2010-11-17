@@ -112,7 +112,7 @@ def getNearestNeighbours(model, Teff, logg, FeH, k=2.0, alpha=0.0, level=1):
     gridLimits = []
     dimensions = ['id']
     
-    availableDimenstions = {    
+    availableDimensions = {    
                             'feh'   : FeH_neighbours,
                             'teff'  : Teff_neighbours,
                             'logg'  : logg_neighbours,
@@ -123,11 +123,12 @@ def getNearestNeighbours(model, Teff, logg, FeH, k=2.0, alpha=0.0, level=1):
     for dimension, neighbours in availableDimensions.iteritems():
     
         # If only one 'neighbour' is present, then this dimension does not need to be interpolated upon
-        if (len(neighbours) > 1): dimensions.append(dimension)
+        if (len(neighbours) > 1):
+            dimensions.append(dimension)
         
-        # Add these limits for the sql query
-        gridLimits.append(min(neighbours))
-        gridLimits.append(max(neighbours))
+            # Add these limits for the sql query
+            gridLimits.append(min(neighbours))
+            gridLimits.append(max(neighbours))
         
         
     # String it all together        
