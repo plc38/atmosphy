@@ -391,6 +391,8 @@ def download(modelNames, overwrite=False, verbose=True, dbPath=initialize.atmosS
         srcPath = os.path.join(modelsPath, modelName)
         dstPath = os.path.join(srcPath, 'split')
         
+        if verbose:
+            print 'Importing model...'
         importModel(modelName, srcPath, dstPath, overwrite=overwrite, verbose=verbose)
 
     
