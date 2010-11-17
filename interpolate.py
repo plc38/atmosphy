@@ -16,16 +16,11 @@ def getInterpModels(dimensions, whereSQLStatement, gridData):
 	positions = conn.execute('select %s whereSQLStatement' %
 							 (dimensions,)).fetchall()
 	binaryDecks = conn.execute('select deck whereSQLStatement')
-
-	conn.close()
 	
 	modelGrid = []
 	for binDeck in binaryDecks:
 		deck = pickle.loads(zlib.decompress(binDeck))
 		modelGrid.append(deck)
-		
-	
-	
 	return np.array(modelGrid)
 
 
@@ -80,7 +75,6 @@ def getNearestNeighbours(model, Teff, logg, FeH, k=2.0, alpha=0.0, level=1):
     
     # todo - consider rewriting following section into a loop?
     FeH_grid, Teff_grid, logg_grid, k_grid, alpha_grid = zip(*result.fetchall())
-    connection.close()
     
     grid = zip(Teff_grid, logg_grid, FeH_grid, k_grid, alpha_grid)
     
@@ -99,18 +93,19 @@ def getNearestNeighbours(model, Teff, logg, FeH, k=2.0, alpha=0.0, level=1):
     # Find the k available for our FeH, Teff, and logg restricted 
     k_available = [point[3] for point in grid if point[2] in FeH_neighbours and point[0] in Teff_neighbours and point[1] in logg_neighbours]
     k_neighbours = get1Dneighbours(k_available, k, level=level)
-    
+
     # Find the alpha available for our FeH, Teff, logg, and k restricted
-    alpha_available = [point[4] for point in grid if point[1] in FeH_neighbours and point[0] in Teff_neighbours and point[1] in logg_neighbours and point[3] in k_neighbours]
+    alpha_available = [point[4] for point in grid if point[2] in FeH_neighbours and point[0] in Teff_neighbours and point[1] in logg_neighbours and point[3] in k_neighbours]
+    
     alpha_neighbours = get1Dneighbours(alpha_available, alpha, level=level)
     
-    
+
     # Build the dimensions we want back from the SQL table
     
     gridLimits = []
     dimensions = ['id']
     
-    availableDimenstions = {    
+    availableDimensions = {    
                             'feh'   : FeH_neighbours,
                             'teff'  : Teff_neighbours,
                             'logg'  : logg_neighbours,
@@ -129,7 +124,7 @@ def getNearestNeighbours(model, Teff, logg, FeH, k=2.0, alpha=0.0, level=1):
         
         
     # String it all together        
-    whereSql = ' from %s where ' % modelName + ' between ? and ? '.join(dimensions) + ' between ? and ?'
+    whereSql = ' from %s where ' % model + ' between ? and ? '.join(dimensions) + ' between ? and ?'
     #dimensions = ', '.join(dimensions)
 
     # Execute and return the SQL
@@ -174,8 +169,7 @@ def get1Dneighbours(data, point, level=1):
     
     # If there are none positive, or none negative then this point is outside the bounds of the grid
     if (1 > len(pos)) or (1 > len(neg)):
-        raise atmosphyOutOfBoundsError('the given data point (%2.4f)'
-        								' is outside the bounds of the grid' % point)
+        raise atmosphyOutOfBoundsError('the given data point (%2.4f) is outside the bounds of the grid' % point)
 
     # We may have duplicates of the same value, which is screwy with levels
 
