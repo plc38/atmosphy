@@ -26,11 +26,9 @@ def importModel(modelName, srcPath, dstPath = None, clobber=False):
 	if dstPath == None:
 		dstPath = initialize.atmosStoragePath(modelName)
 
-	modelSrc = ""
-	for fname in glob(os.path.join(srcPath,'*.dat')):
-		modelSrc += file(fname).read()
-
-	modelsRawData = re.split('B?EGIN\s+ITERATION\s+\d+\s+COMPLETED',modelSrc)
+	
+	
+		
 
     # Check to see if the destination path exists
 	if not os.path.exists(dstPath):
@@ -41,54 +39,64 @@ def importModel(modelName, srcPath, dstPath = None, clobber=False):
 	
 	conn = modeldb.getModelDBConnection()
 	
+	for fname in glob(os.path.join(srcPath,'*.dat')):
+		modelSrc = file(fname).read()
+		modelsRawData = re.split('B?EGIN\s+ITERATION\s+\d+\s+COMPLETED',modelSrc)
+		
+		for model in modelsRawData:
+			#problem with split
+			if model == '\n': continue
+			
+			teffLoggMatch = re.search('T?EFF\s+(\d+\.\d*)\s+GRAVITY\s+(\d+\.\d*)',model)
+			
+			#searching for metallicity, alpha and microturbulence
+			metalAlphaMatch = re.search('\[([+-]?\d+\.\d+)([ab]?)\]', model)
+			microMatch = re.search('VTURB[ =]?(\d+\.\d+)',model)
+			mixLengthMatch = re.search('ONVECTION (OFF|ON)\s+(\d+\.\d+)',model)
+			pradkMatch = re.search('P?RADK (\d+\.\d+E[+-]?\d+)',model)
+			
+			#Checking the integrity of the model
+
+			if teffLoggMatch == None:
+				raise casKurImportException(
+					"Current Model does not contain effective temperature:"
+					"\n\n--------\n\n%s" % (model,))
 	
-	for model in modelsRawData:
-		#problem with split
-		if model == '\n': continue
-		
-		teffLoggMatch = re.search('T?EFF\s+(\d+\.\d*)\s+GRAVITY\s+(\d+\.\d*)',model)
-		
-		#searching for metallicity, alpha and microturbulence
-		metalAlphaMatch = re.search('\[([+-]?\d+\.\d+)([ab]?)\]', model)
-		microMatch = re.search('VTURB[ =]?(\d+\.\d+)',model)
-		mixLengthMatch = re.search('ONVECTION (OFF|ON)\s+(\d+\.\d+)',model)
-		pradkMatch = re.search('P?RADK (\d+\.\d+E[+-]?\d+)',model)
-		
-		#Checking the integrity of the model
-		
-		if teffLoggMatch == None:
-			raise casKurImportException(
-				"Current Model does not contain effective temperature:"
-				"\n\n--------\n\n%s" % (model,))
-		
-		if metalAlphaMatch == None:
-			raise casKurImportException(
-				"Current Model does not contain metallicity information:"
-				"\n\n--------\n\n%s" % (model,))
-
-		if mixLengthMatch == None:
-			raise casKurImportException(
-				"Current Model does not contain mixing length information:"
-				"\n\n--------\n\n%s" % (model,))
-
-		
-		#reading in the model parameters
-		convertAlpha = {'':0.0, 'a':0.4, 'b':1.0}
-		
-		teff	= float(teffLoggMatch.groups()[0])
-		logg 	= float(teffLoggMatch.groups()[1])
-		feh		= float(metalAlphaMatch.groups()[0])
-		alpha 	= convertAlpha[metalAlphaMatch.groups()[1]]
-		micro	= float(microMatch.groups()[0])
-		mixing 	= float(mixLengthMatch.groups()[1])
-		pradk	= float(pradkMatch.groups()[0])
-		
-		#reading model, pickling it and compressing it
-		deck = readDeck(model)
-		zipdDeck = zlib.compress(pickle.dumps(deck))
-		
-		#writing to db
-		modeldb.insertModelData(conn, modelName, [teff, logg, feh, micro, alpha, mixing, pradk, zipdDeck])
+				
+				
+			try:					
+				if metalAlphaMatch == None:
+					raise casKurImportException(
+						"Current Model does not contain metallicity information:"
+						"\n\n--------\n\n%s" % (model,))
+			except casKurImportException:
+				knownProblemFiles = ['ap00k2.dat','ap00k4.dat','asun.dat']
+				if fname in knownProblemFiles:
+					continue
+				
+			if mixLengthMatch == None:
+				raise casKurImportException(
+					"Current Model does not contain mixing length information:"
+					"\n\n--------\n\n%s" % (model,))
+	
+			
+			#reading in the model parameters
+			convertAlpha = {'':0.0, 'a':0.4, 'b':1.0}
+			
+			teff	= float(teffLoggMatch.groups()[0])
+			logg 	= float(teffLoggMatch.groups()[1])
+			feh		= float(metalAlphaMatch.groups()[0])
+			alpha 	= convertAlpha[metalAlphaMatch.groups()[1]]
+			micro	= float(microMatch.groups()[0])
+			mixing 	= float(mixLengthMatch.groups()[1])
+			pradk	= float(pradkMatch.groups()[0])
+			
+			#reading model, pickling it and compressing it
+			deck = readDeck(model)
+			zipdDeck = zlib.compress(pickle.dumps(deck))
+			
+			#writing to db
+			modeldb.insertModelData(conn, modelName, [teff, logg, feh, micro, alpha, mixing, pradk, zipdDeck])
 		
 	conn.commit()
 	conn.close()
