@@ -19,7 +19,7 @@ setup(name='atmosphy',
       packages = ['atmosphy'],
       package_dir = {'atmosphy':'./'},
       cmdclass = {'build_py':build_py},
-      data_files = [('~/.atmosphy', 'conf.d')],
+      #data_files = [('~/.atmosphy', 'conf.d')],
       install_requires = ['argparse>=1.1']
      )
 

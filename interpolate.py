@@ -162,6 +162,8 @@ def get1Dneighbours(data, point, level=1):
             The number of neighbours to find on either side of the point.
     """
     
+    if (1 > len(data)): return data
+    
     offset = np.array(data) - point
     
     # If there is an exact point that we want, then we don't want to interpolate at all        
