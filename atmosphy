@@ -1,32 +1,48 @@
 #!/usr/bin/env python
+
 import argparse
+
+
+import initialize
 
 usage="Usage: %prog file catalogue [options]"
 
 parser=argparse.ArgumentParser(description='Interpolate stellar atmospheres for usage in spectrum synthesis codes like MOOG.')
 #parser = OptionParser(usage=usage)
-parser.add_argument("-teff",
+parser.add_argument("teff",
 					help="Effective Temperature\
 					 of the required model",
-					 type=float,
-					 required=True)
+					 type=float)
 
-parser.add_argument("-logg",
+parser.add_argument("logg",
 					help="Surface Gravity (log(g))\
 					 of the required model",
-					 type=float,
-					 required=True)
+					 type=float)
 
-parser.add_argument("-feh",
+parser.add_argument("feh",
 					help="Metallicity [Fe/H]\
 					 of the required model",
+					 type=float)
+					 
+parser.add_argument("-k","--microturb",
+					help="Micro turbulence \
+					in km/s default = %(default).1f",
 					 type=float,
-					 required=True)
+					 dest='k',
+					 default=2.0)
+					 
+parser.add_argument("-a","--alpha",
+					help="Enhancement with \
+					 alpha elements (e.g. C,N,O) \
+					 default = %(default).1f",
+					 type=float,
+					 dest='alpha',
+					 default=0.0)
 
 
 parser.add_argument("--modelgrid",
-					help="Name of modelgrid default=%(default)s",
-					 default="normal")
+					help="Name of modelgrid default = %(default)s",
+					 default="caskur")
 					 
 parser.add_argument("--showgrids",
 					help="Show all modelgrids\
