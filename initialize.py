@@ -29,7 +29,7 @@ class modelDB():
 
   
   
-    def getModels(self, modelNames):
+    def download(self, modelNames, overwrite=False, verbose=True):
     
         """
         Download the given model(s) from the Kurucz website and load them into your database.
@@ -44,147 +44,112 @@ class modelDB():
         Available models:
         =================
         
-        
-        GRIDM01             :   
-        GRIDM02             :   
-        GRIDM03             :   
-        GRIDM05             :   
-        GRIDM05ODFNEW       :
-        GRIDM05AODFNEW      :
-        GRIDM05NOVER        :
-        GRIDM10             :
-        GRIDM10ANOVER       :
-        GRIDM10AODFNEW      :
-        GRIDM10HE50         :
-        GRIDM10NOVER        :
-        GRIDM10ODFNEW       :
-        GRIDM15             :
-        GRIDM15NOVER        :
-        GRIDM15ODFNEW       :
-        GRIDM15ANOVER       :
-        GRIDM15AODFNEW      :
-        GRIDM20             :
-        GRIDM20NOVER        :
-        GRIDM20ODFNEW       :
-        GRIDM20ANOVER       :
-        GRIDM20AODFNEW      :
-        GRIDM25             :
-        GRIDM25NOVER        :
-        GRIDM25ODFNEW       :
-        GRIDM25ANOVER       :  
-        GRIDM25AODFNEW      :   
-        GRIDM30             :
-        GRIDM35             :
-        GRIDM40             :
-        GRIDM40AODFNEW      :
-        GRIDM45             :
-        GRIDM50             :
-        GRIDP00             :
-        GRIDP00AODFNEW      :
-        GRIDP00NOVER        :
-        GRIDP00ODFNEW       :
-        GRIDP01             :
-        GRIDP02             :
-        GRIDP02ODFNEW       :
-        GRIDP03             :
-        GRIDP04             :
-        GRIDP05             :
-        GRIDP05NOVER        :
-        GRIDP05ODFNEW       :
-        GRIDP05AODFNEW      :
-        GRIDP10             :
-        GRIDHBETA           :
-        GRIDHBETACASTELLI   :
+            Kurucz          :   Kuruczs grids of model atmospheres, as described in X
+            
+            Kurucz-NOVER    :   Kurucz models with no convective overshooting computed by Fiorella Castelli
+                                [castelli@ts.astro.it] in Trieste. The convective treatment is described in
+                                Castelli, Gratton, and Kuruczs 1997, A&A 328, 841.
+                                
+            Kurucz-ODFNEW   :   Kurucz models as NOVER but with newly computed ODFs with better opacities
+                                and better abundances.
+                                
+            Kurucz-AODFNEW  :   Kurucz models as per ODFNEW but with Alpha enhancement. The alpha-process
+                                elements (O, Ne, Mg, Si, S, Ar, Ca, and Ti) enhanced by +0.4 in the log and
+                                Fe -4.53
 
         
         
         Examples:
         =========
         
-        getModels('GRIDM*')  - This will download all models matching the name 'GRIDM*'
-        
-        getModels(['GRIDM02', 'GRIDH*']) - This will download the GRIDM02 model and all the models matching
-                                            the wildmask 'GRIDH*'        
-        
-        
+            download('Kurucz')          :   Download the standard Kurucz grid models.
+            
+            download('Kurucz-*ODFNEW')  :   This will download both the Kurucz-AODFNEW and the Kurucs-ODFNEW
+                                            model as they both match the wildmask given.
+    
         """
         
         import fnmatch
-
-        availableModels = [
-                             'GRIDM01',
-                             'GRIDM02',
-                             'GRIDM03',
-                             'GRIDM05',
-                             'GRIDM05ODFNEW',
-                             'GRIDM05AODFNEW',
-                             'GRIDM05NOVER',
-                             'GRIDM10',
-                             'GRIDM10ANOVER',
-                             'GRIDM10AODFNEW',
-                             'GRIDM10HE50',
-                             'GRIDM10NOVER',
-                             'GRIDM10ODFNEW',
-                             'GRIDM15',
-                             'GRIDM15NOVER',
-                             'GRIDM15ODFNEW',
-                             'GRIDM15ANOVER',
-                             'GRIDM15AODFNEW',
-                             'GRIDM20',
-                             'GRIDM20NOVER',
-                             'GRIDM20ODFNEW',
-                             'GRIDM20ANOVER',
-                             'GRIDM20AODFNEW',
-                             'GRIDM25',
-                             'GRIDM25NOVER',
-                             'GRIDM25ODFNEW',
-                             'GRIDM25ANOVER',
-                             'GRIDM25AODFNEW',
-                             'GRIDM30',
-                             'GRIDM35',
-                             'GRIDM40',
-                             'GRIDM40AODFNEW',
-                             'GRIDM45',
-                             'GRIDM50',
-                             'GRIDP00',
-                             'GRIDP00AODFNEW',
-                             'GRIDP00NOVER',
-                             'GRIDP00ODFNEW',
-                             'GRIDP01',
-                             'GRIDP02',
-                             'GRIDP02ODFNEW',
-                             'GRIDP03',
-                             'GRIDP04',
-                             'GRIDP05',
-                             'GRIDP05NOVER',
-                             'GRIDP05ODFNEW',
-                             'GRIDP05AODFNEW',
-                             'GRIDP10',
-                             #'GRIDHBETA',          -- returned a 404
-                             'GRIDHBETACASTELLI'
-                         ]
-                         
+        from ConfigParser import ConfigParser
+        
+        parser = ConfigParser()
+        if not os.path.exists(os.path.dirname(getDBPath()) + '/conf.d'): raise ValueError, 'no configuration file found in %s' % os.path.dirname(getDBPath()) + '/conf.d'
+        
+        parser.read(os.path.dirname(getDBPath()) + '/conf.d')
+        
+        # Get all the available model names from our configuration file
+        availableModels = config.options('models')
                       
         if (type(modelNames) == type(str())): modelNames = [modelNames]
         
-        modelStack = []
+        # Find all the models that match our wildmask given
+        
+        modelMatches = []
         for modelName in modelNames:
-            modelStack = modelStack + fnmatch.filter(availableModels, modelName.upper())
-            
-        # Download all the model name files and for each one, create the directory in the .pycaskur database
+            modelMatches = modelMatches + fnmatch.filter(availableModels, modelName.lower())
+        
+        
+        if (1 > len(modelMatches)): raise ValueError, 'no models found'
+        
+        # Get the regular expression patterns for each model name
+        
+        modelStacks = {}
+        
+        for modelMatch in modelMatches:
+            modelStacks[modelMatch] = parser.get('models', modelMatch).strip('"\'').split()
 
-        for modelName in modelStack:
+        
+        # Get all the model files we need
+        
+        for modelName, modelFiles in modelStacks.iteritems():
+        
             
-            url = 'HTTP://KURUCZ.harvard.edu/grids/' + modelName.replace('GRIDM', 'gridm').replace('GRID', 'grid')
+            if verbose:
+                print 'Entering %s' % modelName
             
-            # List the index of that directory, look for the .dat file
+            # Generate the models directory if it doesn't exist
+            if not os.path.exists(os.path.dirname(getDBPath()) + 'models/'):
+                if verbose:
+                    print 'Creating %s' % os.path.dirname(getDBPath()) + '/models/'
+                    
+                os.system('mkdir %s' % os.path.dirname(getDBPath()) + '/models/')
             
-            stream = urllib2.urlopen(url)
-            html = stream.read()
+            # Generate this specific model directory if it doesn't exist
+            if not os.path.exists(os.path.dirname(getDBPath()) + 'models/' + modelName + '/'):
+                if verbose:
+                    print 'Creating %s' % os.path.dirname(getDBPath()) + '/models/' + modelName
+                
+                os.system('mkdir %s' % os.path.dirname(getDBPath()) + '/models/' + modelName)
+    
             
-            
-            print modelName, url
-            print html
+            for modelFile in modelFiles:
+        
+                # Check to see if this file already exists
+                fullPath = os.path.dirname(getDBPath()) + '/models/' + modelName + '/' + modelFile.split('/')[-1]
+                fileExists = os.path.exists(fullPath)
+                
+                if (overwrite and fileExists) or not fileExists:
+                    
+                    if verbose and not fileExists: print 'Writing %s from %s' % (fullPath, modelFile)
+                    if fileExists:
+                        if verbose: print 'Over-writing %s with %s' % (fullPath, modelFile)
+                        os.system('rm -f %s' % fullPath)
+                        
+                    stream = urllib2.urlopen(modelFile)
+                    data = stream.read()
+                    stream.close()
+                    
+
+                    
+                    newFile = open(fullPath, 'w')
+                    newFile.write(data)
+                    newFile.close()
+                    
+                    
+        
+        # todo - import into database
+                
+                
     
     def populate(self, modelName, dbPath=None, directory=os.getcwd() + '/', wildmask='*.dat', verbose=False):
         """

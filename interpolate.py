@@ -23,31 +23,39 @@ def interpModelGrid(Teff, logg, FeH, modelName):
 
 	return interpolate.griddata(modelGridCoord, modelGrid, (Teff, logg, FeH),method='linear')
 	
+	
 def getNearestNeighbours(model='caskur', Teff=None, logg=None, FeH=None, k=2.0, level=1):
 
     """
     
-    Finds the nearest neighbours from a directory of Kurucz model files.
+    Finds the nearest neighbours to a point in a multi-dimensional grid.
+    
     
     Parameters:
     ===========
     
     FeH     : float
-            The metallicity ([Fe/H]) of the star you plan to interpolate for.
+              The metallicity ([Fe/H]) of the star you plan to interpolate for.
             
     Teff    : float
-            The effective temperature (Teff in Kelvin) of the star you plan to interpolate for.
+              The effective temperature (Teff in Kelvin) of the star you plan to interpolate for.
     
     logg    : float
-            The surface gravity (log g) of the star you plan to interpolate for.
+              The surface gravity (log g) of the star you plan to interpolate for.
             
-    k       : float
-            The turbulence in the atmosphere of the star (km/s).
+    k       : float, optional
+              The turbulence in the atmosphere of the star (km/s).
+            
+    level   : integer, optional
+              The maximum number of levels on either side of the point you wish to return in each
+              dimension.
     """
     
 
-    if (1 > level):
-        raise ValueError, 'level must be a positive integer'
+    if (1 > level): raise ValueError, 'level must be a positive integer'
+    if (Teff < 0): raise ValueError, 'Teff must be a positive float'
+    if (logg < 0): raise ValueError, 'logg must be a positive float'
+    if (k < 0): raise ValueError, 'k must be a positive float'
 
     
 
@@ -60,19 +68,19 @@ def getNearestNeighbours(model='caskur', Teff=None, logg=None, FeH=None, k=2.0, 
     
     
     # Find the nearest N levels of indexedFeHs
-    FeH_nearest  = getLevels(FeH_grid, FeH, level=level)
+    FeH_nearest  = get1Dneighbours(FeH_grid, FeH, level=level)
 
     # Find the Teff available for our FeH possibilites
     Teff_available = [point[0] for point in grid if point[2] in FeH_nearest]
 
     # Find the nearest N levels of Teff_available to Teff
-    Teff_nearest = getLevels(Teff_available, Teff, level=level)
+    Teff_nearest = get1Dneighbours(Teff_available, Teff, level=level)
     
     # Find the logg available for our FeH and Teff possibilities
     logg_available = [point[1] for point in grid if point[2] in FeH_nearest and point[0] in Teff_nearest]
     
     # Find the nearest N levels of logg_available to logg
-    logg_nearest = getLevels(logg_available, logg, level=level)
+    logg_nearest = get1Dneighbours(logg_available, logg, level=level)
 
     # Grab back the filenames of these grid points
     
@@ -88,7 +96,7 @@ def getNearestNeighbours(model='caskur', Teff=None, logg=None, FeH=None, k=2.0, 
                                     
         
         
-def getLevels(data, point, level=1):
+def get1Dneighbours(data, point, level=1):
     """
     
     Returns closest neighbours on either side of the point provided.
