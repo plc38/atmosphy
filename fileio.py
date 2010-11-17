@@ -10,6 +10,9 @@ import numpy as np
 import initialize
 import urllib2
 
+import fnmatch
+from ConfigParser import ConfigParser
+
 class casKurImportException(Exception):
 	pass
 
@@ -166,10 +169,114 @@ class casKurModel(object):
 
   
   
+def availableModels():
+    
+    """
+    
+    Reads from the astrophy config file and returns a dictionary of available model names
+    and their relevant descriptions.
+    
+    """
+    
+    configFilename = initialize.atmosStoragePath('models.d')
+    
+    parser = ConfigParser()
+    parser.read(configFilename)
+    
+    modelNames = parser.sections() #here
+    
+    availableModels = {}
+    
+    for modelName in modelNames:
+        availableModels[modelName] = parser.get(modelName, 'description')
+        
+    return availableModels
+    
+    
+def generateMOOG(Teff, logg, FeH, nTau, deck):
+
+    """
+    
+    Generates a MOOG-compatible string containing the given stellar parameters (Teff, logg, FeH, nTau)
+    and a given stellar atmosphere deck.
+    
+    Parameters:
+    ===========
+    
+        Teff    :   float
+                    The effective temperature of the model star (Kelvin).
+                    
+        logg    :   float
+                    The surface gravity of the model star.
+        
+        FeH     :   float
+                    The metallicity ([Fe/H]) of the model star.
+                
+        nTau    :   float
+                    The nTau value of the model atmosphere.
+                    
+        deck    :   array-type
+                    The full (floating point) deck values for the model atmosphere.
+                         
+                         
+    Examples:
+    =========
+    
+        MOOGformatting = generateMOOG(5000.0, 2.0, -3.0, 1.672, [[3.02342, ... 5.23423], ..., [1.3423, ..., 8.233423]])
+        
+        myfile = open('modelatmosphere.mod', 'w')
+        myfile.write(MOOGformatting)
+        myfile.close()
+        
+        Here your modelatmosphere.mod file is ready to be interpreted by MOOG.
+        
+        
+    """
+    # todo - does nTau value need to be interpolated between like the deck?
+
+    if (type(deck) == type(None)):
+        raise ValueError('deck is missing')
+        
+    # Generate the output file name
+    output = str(Teff).split('.')[0] + '_' + str(logg).replace('.', '')[0:2] + '_p' + str(FeH).replace('-', 'm')[0:2] + '.mod'
+    output = output.replace('pm', 'm')
+    
+
+    content  = "KURUCZ\n"
+    content += "          TEFF   %6.0f.  GRAVITY %2.5f LTE\n" % (Teff, logg,)
+    # todo - do we need to specify anything else here?
+    
+    content += "NTAU        %2.0f\n" % (nTau,)
+    
+    for line in deck:
+        
+        # We need to account that the deck may contain a different number of columns on
+        # different occasions
+        
+        # Since columns 1 and 2 have different formatting, then all the rest have the same
+        # we will fill the rest
+        tempLine = " %1.8E" +  " " * (7 - len(round(Teff))) + "%5.1f" + " %1.3E" * (len(line) - 2) + "\n"
+        content += tempLine % line
+        
+    content += "          2\n"
+    content += "Natoms        0          %2.1f\n" % (FeH,)
+    content += "NMOL          0\n"
+
+    #moog = open(output, 'w')
+    #moog.write(content)
+    #moog.close()
+    
+    return content
+    
+
+
+      
 def download(modelNames, overwrite=False, verbose=True, dbPath=initialize.atmosStoragePath('atmosphy.db3')):
 
     """
-    Download the given model(s) from the Kurucz website and load them into your database.
+    
+    Download the given model(s) from the Kurucz awebsite and load them into your database.
+    
     
     Parameters:
     ===========
@@ -206,8 +313,6 @@ def download(modelNames, overwrite=False, verbose=True, dbPath=initialize.atmosS
 
     """
 
-    import fnmatch
-    from ConfigParser import ConfigParser
     
     modelsPath = initialize.atmosStoragePath('models/')
     configFilename = initialize.atmosStoragePath('conf.d')
@@ -219,7 +324,7 @@ def download(modelNames, overwrite=False, verbose=True, dbPath=initialize.atmosS
     parser.read(configFilename)
     
     # Get all the available model names from our configuration file
-    availableModels = parser.options('models')
+    availableModels = parser.sections() #here
                   
     if (type(modelNames) == type(str())): modelNames = [modelNames]
     
@@ -237,7 +342,7 @@ def download(modelNames, overwrite=False, verbose=True, dbPath=initialize.atmosS
     modelStacks = {}
     
     for modelMatch in modelMatches:
-        modelStacks[modelMatch] = parser.get('models', modelMatch).strip('"\'').split()
+        modelStacks[modelMatch] = parser.get(modelMatch, 'files').strip('"\'').split()
 
     
     # Get all the model files we need
