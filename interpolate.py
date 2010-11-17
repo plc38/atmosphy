@@ -3,7 +3,7 @@ from scipy import interpolate
 import glob
 import os
 import sqlite3
-import pdb
+import cPickle as pickle
 
 import fileio
 import initialize
@@ -15,21 +15,22 @@ def getInterpModels(dimensions, whereSQLStatement, gridData):
 	
 	positions = conn.execute('select %s whereSQLStatement' %
 							 (dimensions,)).fetchall()
-	positions = conn.execute('select deck whereSQLStatement')
+	binaryDecks = conn.execute('select deck whereSQLStatement')
 	
 	modelGrid = []
-	for fname in fileNames:
-		modelGrid.append(fileio.readDeck(fname))
+	for binDeck in binaryDecks:
+		deck = pickle.loads(zlib.decompress(binDeck))
+		modelGrid.append(deck)
 	return np.array(modelGrid)
-#rewrite with **kwargs
-def interpModelGrid( modelName, Teff, logg, FeH, alpha = 0.0):
 
-	dimensions, modelName, 
-	whereSQLStatement, gridLimits = getNearestNeighbours(modelName, Teff, logg, FeH)
+
+def interpModelGrid(modelName, Teff, logg, FeH, k=2.0, alpha = 0.0):
+
+	dimensions, whereSQLStatement, gridLimits = getNearestNeighbours(modelName, Teff, logg, FeH, k, alpha)
 	
 	fileNames = zip(*modelData)[0]
 	modelGridCoord = np.array(zip(*modelData)[1:]).transpose()
-	modelGrid = getInterpModels(fileNames)
+	modelGrid = getInterpModels(dimensions, whereSQLStatement, gridData)
 
 	return interpolate.griddata(modelGridCoord, modelGrid, (Teff, logg, FeH),method='linear')
 	
@@ -69,7 +70,7 @@ def getNearestNeighbours(model, Teff, logg, FeH, k=2.0, alpha=0.0, level=1):
 
     
 
-    connection = sqlite3.connect(initialize.getDBPath())
+    connection = modeldb.getModelDBConnection()
 
     result = connection.execute('select feh, teff, logg, k, alpha from %s' % model)
     

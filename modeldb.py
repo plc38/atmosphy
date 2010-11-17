@@ -24,6 +24,7 @@ def initModelTable(modelName, clobber=False):
     										teff DOUBLE,
     										logg DOUBLE,
     										feh DOUBLE,
+    										k DOUBLE,
     										alpha DOUBLE,
     										lh DOUBLE,
     										pradk DOUBLE,
@@ -36,5 +37,5 @@ def insertModelData(conn, modelName, dataTuple):
 	"Insert data into the model database"
 	dataTuple[-1] = sqlite3.Binary(dataTuple[-1])
 	conn.execute(
-		'insert into %s(teff, logg, feh, alpha, lh, pradk, deck)'
-		'values (?,?,?,?,?,?,?)' % (modelName,), tuple(dataTuple))
+		'insert into %s(teff, logg, feh, k, alpha, lh, pradk, deck)'
+		'values (?,?,?,?,?,?,?,?)' % (modelName,), tuple(dataTuple))
