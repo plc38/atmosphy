@@ -29,19 +29,6 @@ class modelDB():
     	
     	return None
     	
-    	
-
-
-
-    # todo - need to make something that installs the conf.d file
-    
-    
-    
-										
-#def initModelDB(modelName, columnNames , dbPath='~/.pycaskur/modeldb.db3'):
-#	"""initialize a model table with filenames, this will be called when downloading a new model"""
-#	initModelTable = "CREATE TABLE %s(filename,%s)"""%','.join(columnNames)"
-
 
 
 

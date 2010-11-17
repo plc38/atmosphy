@@ -1,5 +1,3 @@
-#todo: 
-#	check if the BEGIN ITERATION statement is needed to write single files
 
 import re
 import pdb
@@ -7,102 +5,93 @@ import os
 import sqlite3
 from glob import glob
 import numpy as np
-import initialize
 import urllib2
+import zlib
+import pickle
+
+
+import initialize
+import modeldb
 
 class casKurImportException(Exception):
 	pass
 
 def importModel(modelName, srcPath, dstPath = None, overwrite=False, verbose=False):
+	
+	"importing model into the database"
+	
 	if dstPath == None:
 		dstPath = initialize.atmosStoragePath(modelName)
+
+	modelSrc = ""
+	for fname in glob(os.path.join(srcPath,'*.dat')):
+		modelSrc += file(fname).read()
+
+	modelsRawData = re.split('B?EGIN\s+ITERATION\s+\d+\s+COMPLETED',modelSrc)
 
     # Check to see if the destination path exists
 	if not os.path.exists(dstPath):
 		os.makedirs(dstPath)
-	modelData = splitModel(srcPath,dstPath)
-	dbPath = initialize.atmosStoragePath('atmosphy.db3')
-	conn = sqlite3.connect(dbPath)
+		
+
+	modeldb.initModelTable(modelName)
 	
-	if len(conn.execute("	SELECT name FROM sqlite_master \
-					WHERE type='table' AND \
-					name='%s'"%modelName).fetchall()) == 1:
-					
-                        if overwrite:
-                            # clear the table
-                            raise Exception, 'test'
+	conn = modeldb.getModelDBConnection()
+	
+	
+	for model in modelsRawData:
+		#problem with split
+		if model == '\n': continue
+		
+		teffLoggMatch = re.search('T?EFF\s+(\d+\.\d*)\s+GRAVITY\s+(\d+\.\d*)',model)
+		
+		#searching for metallicity, alpha and microturbulence
+		metalAlphaMatch = re.search('\[([+-]?\d+\.\d+)([ab]?)\]', model)
+		microMatch = re.search('VTURB[ =]?(\d+\.\d+)',model)
+		mixLengthMatch = re.search('ONVECTION (OFF|ON)\s+(\d+\.\d+)',model)
+		pradkMatch = re.search('P?RADK (\d+\.\d+E[+-]?\d+)',model)
+		
+		#Checking the integrity of the model
+		
+		if teffLoggMatch == None:
+			raise casKurImportException(
+				"Current Model does not contain effective temperature:"
+				"\n\n--------\n\n%s" % (model,))
+		
+		if metalAlphaMatch == None:
+			raise casKurImportException(
+				"Current Model does not contain metallicity information:"
+				"\n\n--------\n\n%s" % (model,))
 
-	initModelTable = """CREATE TABLE %s(filename STRING, 
-    										teff DOUBLE,
-    										logg DOUBLE,
-    										feh DOUBLE,
-    										alpha DOUBLE,
-    										lh DOUBLE)"""%modelName
-	conn.execute(initModelTable)
+		if mixLengthMatch == None:
+			raise casKurImportException(
+				"Current Model does not contain mixing length information:"
+				"\n\n--------\n\n%s" % (model,))
 
-	for model in modelData:
-		conn.execute('insert into %s values (?,?,?,?,?,?)'%modelName,tuple(model))
-
+		
+		#reading in the model parameters
+		convertAlpha = {'':0.0, 'a':0.4, 'b':1.0}
+		
+		teff	= float(teffLoggMatch.groups()[0])
+		logg 	= float(teffLoggMatch.groups()[1])
+		feh		= float(metalAlphaMatch.groups()[0])
+		alpha 	= convertAlpha[metalAlphaMatch.groups()[1]]
+		mixing 	= float(mixLengthMatch.groups()[1])
+		pradk	= float(pradkMatch.groups()[0])
+		
+		#reading model, pickling it and compressing it
+		deck = readDeck(model)
+		zipdDeck = zlib.compress(pickle.dumps(deck))
+		
+		#writing to db
+		modeldb.insertModelData(conn, modelName, [teff, logg, feh, alpha, mixing, pradk, zipdDeck])
+		
 	conn.commit()
 	conn.close()
 	
 
-def splitModel(srcPath, dstPath, overwrite=False, verbose=False):
-	"""Imports the standard CasKur Modelgrid from srcPath and writes single files to dstPath"""
-	srcPath = os.path.abspath(srcPath)
-	dstPath = os.path.abspath(dstPath)
-	modelData = []
-	for fname in glob(os.path.join(srcPath,'*.dat')):
-		modelSrc = file(fname).read()
-		modelsRawData = re.split('B?EGIN\s+ITERATION\s+\d+\s+COMPLETED',modelSrc)
+			 
 
-						 
-		for model in modelsRawData:
-			#problem with split
-			if model == '\n': continue
-			
-			teffLoggMatch = re.search('T?EFF\s+(\d+\.\d*)\s+GRAVITY\s+(\d+\.\d*)',model)
-			
-			#searching for metallicity, alpha and microturbulence
-			metalAlphaMatch = re.search('\[([+-]?\d+\.\d+)([ab]?)\]', model)
-			microMatch = re.search('VTURB[ =]?(\d+\.\d+)',model)
-			mixLengthMatch = re.search('ONVECTION (OFF|ON)\s+(\d+\.\d+)',model)
-			
-			#Checking the integrity of the model
-			
-			if teffLoggMatch == None:
-				raise casKurImportException(
-					"Current Model does not contain effective temperature:"
-					"\n\n--------\n\n%s" % (model,))
-			
-			if metalAlphaMatch == None:
-				raise casKurImportException(
-					"Current Model does not contain metallicity information:"
-					"\n\n--------\n\n%s" % (model,))
-
-			if mixLengthMatch == None:
-				raise casKurImportException(
-					"Current Model does not contain mixing length information:"
-					"\n\n--------\n\n%s" % (model,))
-
-			
-			#reading in the model parameters
-			convertAlpha = {'':0.0, 'a':0.4, 'b':1.0}
-			
-			teff	= float(teffLoggMatch.groups()[0])
-			logg 	= float(teffLoggMatch.groups()[1])
-			feh		= float(metalAlphaMatch.groups()[0])
-			alpha 	= convertAlpha[metalAlphaMatch.groups()[1]]
-			mixing 	= float(mixLengthMatch.groups()[1])
-			
-			#writing to file
-			newFName = "teff%.2f_logg%.3f_feh%.3f_alpha%.2f_lh%.2f.dat"%(teff, logg, feh, alpha, mixing)
-			if verbose:
-				print "Writing %s"%newFName
-			newFPath = os.path.join(dstPath,newFName)
-			file(os.path.join(dstPath,newFName),'w').write(model)
-			modelData.append([os.path.join(dstPath,newFName),teff,logg,feh,alpha,mixing])
-	return modelData
 		
 	
 def getNextLine(dataIter):
@@ -111,18 +100,19 @@ def getNextLine(dataIter):
 	except:
 		raise casKurImportException('End of File before model end')
 
-def readDeck(filePath):
+def readDeck(modelString):
 	data = []
-	rawIter = iter(file(filePath))
+	rawIter = iter(re.split('\r|\n',modelString))
 	deckStart = "READ DECK6"
 	while True:
 		line = getNextLine(rawIter)
-		if line.startswith(deckStart): break # perhaps use regex so that it can pick up when the R is missing from READ DECK6? AC
+		if re.match("^R?EAD DECK.*",line) !=None: 
+			break
 		
 	while True:
 			line = getNextLine(rawIter)
-			if line.startswith("PRADK"): # as above AC
-#				self.pradk = float(line.split()[1])
+			
+			if re.match("^PRADK.*",line) != None:
 				break
 			data.append([float(item) for item in line.split()])
 	return np.array(data)
