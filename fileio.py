@@ -46,7 +46,6 @@ def importModel(modelName, srcPath, dstPath = None, overwrite=False, verbose=Fal
 	conn.commit()
 	conn.close()
 	
-	return True
 
 def splitModel(srcPath, dstPath, overwrite=False, verbose=False):
 	"""Imports the standard CasKur Modelgrid from srcPath and writes single files to dstPath"""
@@ -67,21 +66,25 @@ def splitModel(srcPath, dstPath, overwrite=False, verbose=False):
 			#searching for metallicity, alpha and microturbulence
 			metalAlphaMatch = re.search('\[([+-]?\d+\.\d+)([ab]?)\]', model)
 			microMatch = re.search('VTURB[ =]?(\d+\.\d+)',model)
-			mixLengthMatch = re.search('L/H[ =]?(\d+\.\d+)',model)
+			mixLengthMatch = re.search('ONVECTION (OFF|ON)\s+(\d+\.\d+)',model)
 			
 			#Checking the integrity of the model
 			
 			if teffLoggMatch == None:
-			
-				raise casKurImportException("Current\
-				 Model does not contain effective\
-				 temperature:\n\n--------\n\n%s"%model)
+				raise casKurImportException(
+					"Current Model does not contain effective temperature:"
+					"\n\n--------\n\n%s" % (model,))
 			
 			if metalAlphaMatch == None:
-			
-				raise casKurImportException("Current\
-				 Model does not contain metallicity \
-				 information:\n\n--------\n\n%s"%model)
+				raise casKurImportException(
+					"Current Model does not contain metallicity information:"
+					"\n\n--------\n\n%s" % (model,))
+
+			if mixLengthMatch == None:
+				raise casKurImportException(
+					"Current Model does not contain mixing length information:"
+					"\n\n--------\n\n%s" % (model,))
+
 			
 			#reading in the model parameters
 			convertAlpha = {'':0.0, 'a':0.4, 'b':1.0}
@@ -89,8 +92,8 @@ def splitModel(srcPath, dstPath, overwrite=False, verbose=False):
 			teff	= float(teffLoggMatch.groups()[0])
 			logg 	= float(teffLoggMatch.groups()[1])
 			feh		= float(metalAlphaMatch.groups()[0])
-			alpha 	= float(metalAlphaMatch.groups()[0])
-			mixing 	= convertAlpha[metalAlphaMatch.groups()[0]]
+			alpha 	= convertAlpha[metalAlphaMatch.groups()[1]]
+			mixing 	= float(mixLengthMatch.groups()[1])
 			
 			#writing to file
 			newFName = "teff%.2f_logg%.3f_feh%.3f_alpha%.2f_lh%.2f.dat"%(teff, logg, feh, alpha, mixing)
