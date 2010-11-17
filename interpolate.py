@@ -3,24 +3,34 @@ from scipy import interpolate
 import glob
 import os
 import sqlite3
-import pdb
+import cPickle as pickle
+
 import fileio
 import initialize
+import modeldb
 
-readModelFrom
-
-def getInterpModels(fileNames):
+def getInterpModels(dimensions, whereSQLStatement, gridData):
+	
+	conn = modeldb.getModelDBConnection()
+	
+	positions = conn.execute('select %s whereSQLStatement' %
+							 (dimensions,)).fetchall()
+	binaryDecks = conn.execute('select deck whereSQLStatement')
+	
 	modelGrid = []
-	for fname in fileNames:
-		modelGrid.append(fileio.readDeck(fname))
+	for binDeck in binaryDecks:
+		deck = pickle.loads(zlib.decompress(binDeck))
+		modelGrid.append(deck)
 	return np.array(modelGrid)
-#rewrite with **kwargs
-def interpModelGrid( modelName, Teff, logg, FeH, alpha):
 
-	modelData = getNearestNeighbours(modelName, Teff, logg, FeH)
+
+def interpModelGrid(modelName, Teff, logg, FeH, k=2.0, alpha = 0.0):
+
+	dimensions, whereSQLStatement, gridLimits = getNearestNeighbours(modelName, Teff, logg, FeH, k, alpha)
+	
 	fileNames = zip(*modelData)[0]
 	modelGridCoord = np.array(zip(*modelData)[1:]).transpose()
-	modelGrid = getInterpModels(fileNames)
+	modelGrid = getInterpModels(dimensions, whereSQLStatement, gridData)
 
 	return interpolate.griddata(modelGridCoord, modelGrid, (Teff, logg, FeH),method='linear')
 	
@@ -60,14 +70,14 @@ def getNearestNeighbours(model, Teff, logg, FeH, k=2.0, alpha=0.0, level=1):
 
     
 
-    connection = sqlite3.connect(initialize.getDBPath())
+    connection = modeldb.getModelDBConnection()
 
     result = connection.execute('select feh, teff, logg, k, alpha from %s' % model)
     
     # todo - consider rewriting following section into a loop?
-    FeH_grid, Teff_grid, logg_grid, k_grid, alpha_grid = zip(*result.fetchall())
+    FeH_grid, Teff_grid, logg_grid = zip(*result.fetchall())
     
-    grid = zip(Teff_grid, logg_grid, FeH_grid, k_grid, alpha_grid)
+    grid = zip(Teff_grid, logg_grid, FeH_grid)
     
     
     # Find the nearest N levels of indexedFeHs
@@ -93,7 +103,7 @@ def getNearestNeighbours(model, Teff, logg, FeH, k=2.0, alpha=0.0, level=1):
     # Build the dimensions we want back from the SQL table
     
     gridLimits = []
-    dimensions = ['id']
+    dimensions = ['filename']
     
     availableDimenstions = {    
                             'feh'   : FeH_neighbours,
@@ -114,14 +124,12 @@ def getNearestNeighbours(model, Teff, logg, FeH, k=2.0, alpha=0.0, level=1):
         
         
     # String it all together        
-    whereSql = ' from %s where ' % modelName + ' between ? and ? '.join(dimensions) + ' between ? and ?'
-    #dimensions = ', '.join(dimensions)
+    whereSql = ' between ? and ? '.join(dimensions) + ' between ? and ?'
+    dimensions = ', '.join(dimensions)
 
     # Execute and return the SQL
-    return (dimensions, whereSql, gridLimits)
-    
-    #result = connection.execute('select %s from %s where %s' % (dimensions, model, whereSql), gridLimits)
-    #return result.fetchall()
+    result = connection.execute('select %s from %s where %s' % (dimensions, model, whereSql), gridLimits)
+    return result.fetchall()
    
     
     
