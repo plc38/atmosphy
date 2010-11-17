@@ -8,14 +8,17 @@ def getModelDBConnection():
 	"returns a connection to the modelDB"
 	return sqlite3.connect(initialize.atmosStoragePath('atmosphy.db3'))
 	
-def initModelTable(modelName):
+def initModelTable(modelName, clobber=False):
 	"Creating Model Table"
 
 	conn = getModelDBConnection()
 	if len(conn.execute(
 		"SELECT name FROM sqlite_master WHERE type='table' AND	name='%s'" 
 		% (modelName,)).fetchall()) == 1:
-		raise modelDBException("Table already exists")
+		if clobber:
+			conn.execute('DROP TABLE %s' % (modelName,))
+		else:
+			raise modelDBException("Model table already exists")
 
 	initModelTable = """CREATE TABLE %s(	id INTEGER PRIMARY KEY,
     										teff DOUBLE,

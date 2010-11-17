@@ -7,6 +7,7 @@ import pdb
 import fileio
 import initialize
 
+readModelFrom
 
 def getInterpModels(fileNames):
 	modelGrid = []
@@ -14,7 +15,7 @@ def getInterpModels(fileNames):
 		modelGrid.append(fileio.readDeck(fname))
 	return np.array(modelGrid)
 #rewrite with **kwargs
-def interpModelGrid(Teff, logg, FeH, modelName):
+def interpModelGrid( modelName, Teff, logg, FeH, alpha):
 
 	modelData = getNearestNeighbours(modelName, Teff, logg, FeH)
 	fileNames = zip(*modelData)[0]

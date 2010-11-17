@@ -7,7 +7,7 @@ from glob import glob
 import numpy as np
 import urllib2
 import zlib
-import pickle
+import cPickle as pickle
 
 
 import initialize
@@ -16,7 +16,7 @@ import modeldb
 class casKurImportException(Exception):
 	pass
 
-def importModel(modelName, srcPath, dstPath = None, overwrite=False, verbose=False):
+def importModel(modelName, srcPath, dstPath = None, clobber=False):
 	
 	"importing model into the database"
 	
