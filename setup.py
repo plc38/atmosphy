@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-import os
 from distutils.core import setup
 
 try: # Python 3.x
@@ -16,10 +15,10 @@ setup(name='atmosphy',
       author_email='wkerzendorf@mso.anu.edu.au, \
         acasey@mso.anu.edu.au',
       url='',
-      packages = [''],
-      package_dir = {'':'src'},
+      packages = ['atmosphy'],
       cmdclass = {'build_py':build_py},
-      data_files = [('~/.atmosphy', 'conf.d')]
+      data_files = [('~/.atmosphy', 'conf.d')],
+      install_requires = ['http://pypi.python.org/packages/source/a/argparse/argparse-1.1.zip#md5=087399b73047fa5a6482037411ddc968']
      )
 
 
