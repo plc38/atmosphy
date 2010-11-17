@@ -45,7 +45,7 @@ def importModel(modelName, srcPath, dstPath = None, clobber=False):
 		
 		for model in modelsRawData:
 			#problem with split
-			if model == '\n': continue
+			if model == '\n' or model == '': continue
 			
 			teffLoggMatch = re.search('T?EFF\s+(\d+\.\d*)\s+GRAVITY\s+(\d+\.\d*)',model)
 			
