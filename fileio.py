@@ -19,7 +19,7 @@ from ConfigParser import ConfigParser
 class casKurImportException(Exception):
 	pass
 
-def importModel(modelName, srcPath, dstPath = None, clobber=False):
+def importModel(modelName, srcPath, dstPath = None, clobber=False, overwrite=False, verbose=False):
 	
 	"importing model into the database"
 	
