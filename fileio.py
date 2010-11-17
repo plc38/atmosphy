@@ -115,7 +115,7 @@ def readDeck(modelString):
 	while True:
 			line = getNextLine(rawIter)
 			
-			if re.match("^PRADK.*",line) != None:
+			if re.match("^P?RADK.*",line) != None:
 				break
 			data.append([float(item) for item in line.split()])
 	return np.array(data)

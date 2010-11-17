@@ -18,7 +18,8 @@ def initModelTable(modelName, clobber=False):
 		if clobber:
 			conn.execute('DROP TABLE %s' % (modelName,))
 		else:
-			raise modelDBException("Model table already exists")
+			raise modelDBException("Model %s already exists in database"
+								 % (modelName,))
 
 	initModelTable = """CREATE TABLE %s(	id INTEGER PRIMARY KEY,
     										teff DOUBLE,
