@@ -35,11 +35,13 @@ def importModel(modelName, srcPath, dstPath = None, overwrite=False, verbose=Fal
 	initModelTable = """CREATE TABLE %s(filename STRING, 
     										teff DOUBLE,
     										logg DOUBLE,
-    										feh DOUBLE)"""%modelName
+    										feh DOUBLE,
+    										alpha DOUBLE,
+    										lh DOUBLE)"""%modelName
 	conn.execute(initModelTable)
 
 	for model in modelData:
-		conn.execute('insert into %s values (?,?,?,?)'%modelName,tuple(model))
+		conn.execute('insert into %s values (?,?,?,?,?,?)'%modelName,tuple(model))
 
 	conn.commit()
 	conn.close()
