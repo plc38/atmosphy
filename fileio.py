@@ -71,8 +71,12 @@ def importModel(modelName, srcPath, dstPath = None, clobber=False):
 						"\n\n--------\n\n%s" % (model,))
 			except casKurImportException:
 				knownProblemFiles = ['ap00k2.dat','ap00k4.dat','asun.dat']
-				if fname in knownProblemFiles:
+				if os.path.basename(fname) in knownProblemFiles:
 					continue
+				else:
+					raise casKurImportException(
+						"Current Model does not contain metallicity information:"
+						"\n\n--------\n\n%s" % (model,))
 				
 			if mixLengthMatch == None:
 				raise casKurImportException(
