@@ -16,11 +16,16 @@ def getInterpModels(dimensions, whereSQLStatement, gridData):
 	positions = conn.execute('select %s whereSQLStatement' %
 							 (dimensions,)).fetchall()
 	binaryDecks = conn.execute('select deck whereSQLStatement')
+
+	conn.close()
 	
 	modelGrid = []
 	for binDeck in binaryDecks:
 		deck = pickle.loads(zlib.decompress(binDeck))
 		modelGrid.append(deck)
+		
+	
+	
 	return np.array(modelGrid)
 
 
@@ -70,12 +75,13 @@ def getNearestNeighbours(model, Teff, logg, FeH, k=2.0, alpha=0.0, level=1):
 
     
 
-    connection = sqlite3.connect(initialize.getDBPath())
+    connection = modeldb.getModelDBConnection()
 
     result = connection.execute('select feh, teff, logg, k, alpha from %s' % model)
     
     # todo - consider rewriting following section into a loop?
     FeH_grid, Teff_grid, logg_grid, k_grid, alpha_grid = zip(*result.fetchall())
+    connection.close()
     
     grid = zip(Teff_grid, logg_grid, FeH_grid, k_grid, alpha_grid)
     
@@ -169,7 +175,8 @@ def get1Dneighbours(data, point, level=1):
     
     # If there are none positive, or none negative then this point is outside the bounds of the grid
     if (1 > len(pos)) or (1 > len(neg)):
-        raise atmosphyOutOfBoundsError, 'the given data point (%2.4f) is outside the bounds of the grid' % point
+        raise atmosphyOutOfBoundsError('the given data point (%2.4f)'
+        								' is outside the bounds of the grid' % point)
 
     # We may have duplicates of the same value, which is screwy with levels
 
@@ -185,5 +192,5 @@ def get1Dneighbours(data, point, level=1):
     return neighbours
 
 
-class atmosphyOutOfBoundsError():
+class atmosphyOutOfBoundsError(Exception):
     pass
