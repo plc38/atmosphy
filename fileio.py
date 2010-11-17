@@ -91,7 +91,7 @@ def splitModel(srcPath, dstPath, overwrite=False, verbose=False):
 			mixing 	= convertAlpha[metalAlphaMatch.groups()[0]]
 			
 			#writing to file
-			newFName = "teff%.2f_logg%.3f_feh%.3f_alpha%.2f_.dat_lh%.2f"%(teff, logg, feh, alpha, mixing)
+			newFName = "teff%.2f_logg%.3f_feh%.3f_alpha%.2f_lh%.2f.dat"%(teff, logg, feh, alpha, mixing)
 			if verbose:
 				print "Writing %s"%newFName
 			newFPath = os.path.join(dstPath,newFName)
