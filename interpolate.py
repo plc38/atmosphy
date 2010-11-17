@@ -4,20 +4,29 @@ import glob
 import os
 import sqlite3
 import pdb
+
 import fileio
 import initialize
+import modeldb
 
-readModelFrom
-
-def getInterpModels(fileNames):
+def getInterpModels(dimensions, whereSQLStatement, gridData):
+	
+	conn = modeldb.getModelDBConnection()
+	
+	positions = conn.execute('select %s whereSQLStatement' %
+							 (dimensions,)).fetchall()
+	positions = conn.execute('select deck whereSQLStatement')
+	
 	modelGrid = []
 	for fname in fileNames:
 		modelGrid.append(fileio.readDeck(fname))
 	return np.array(modelGrid)
 #rewrite with **kwargs
-def interpModelGrid( modelName, Teff, logg, FeH, alpha):
+def interpModelGrid( modelName, Teff, logg, FeH, alpha = 0.0):
 
-	modelData = getNearestNeighbours(modelName, Teff, logg, FeH)
+	dimensions, modelName, 
+	whereSQLStatement, gridLimits = getNearestNeighbours(modelName, Teff, logg, FeH)
+	
 	fileNames = zip(*modelData)[0]
 	modelGridCoord = np.array(zip(*modelData)[1:]).transpose()
 	modelGrid = getInterpModels(fileNames)
@@ -65,9 +74,9 @@ def getNearestNeighbours(model, Teff, logg, FeH, k=2.0, alpha=0.0, level=1):
     result = connection.execute('select feh, teff, logg, k, alpha from %s' % model)
     
     # todo - consider rewriting following section into a loop?
-    FeH_grid, Teff_grid, logg_grid, k_grid, alpha_grid = zip(*result.fetchall())
+    FeH_grid, Teff_grid, logg_grid = zip(*result.fetchall())
     
-    grid = zip(Teff_grid, logg_grid, FeH_grid, k_grid, alpha_grid)
+    grid = zip(Teff_grid, logg_grid, FeH_grid)
     
     
     # Find the nearest N levels of indexedFeHs
@@ -93,7 +102,7 @@ def getNearestNeighbours(model, Teff, logg, FeH, k=2.0, alpha=0.0, level=1):
     # Build the dimensions we want back from the SQL table
     
     gridLimits = []
-    dimensions = ['id']
+    dimensions = ['filename']
     
     availableDimenstions = {    
                             'feh'   : FeH_neighbours,
@@ -114,14 +123,12 @@ def getNearestNeighbours(model, Teff, logg, FeH, k=2.0, alpha=0.0, level=1):
         
         
     # String it all together        
-    whereSql = ' from %s where ' % modelName + ' between ? and ? '.join(dimensions) + ' between ? and ?'
-    #dimensions = ', '.join(dimensions)
+    whereSql = ' between ? and ? '.join(dimensions) + ' between ? and ?'
+    dimensions = ', '.join(dimensions)
 
     # Execute and return the SQL
-    return (dimensions, whereSql, gridLimits)
-    
-    #result = connection.execute('select %s from %s where %s' % (dimensions, model, whereSql), gridLimits)
-    #return result.fetchall()
+    result = connection.execute('select %s from %s where %s' % (dimensions, model, whereSql), gridLimits)
+    return result.fetchall()
    
     
     
