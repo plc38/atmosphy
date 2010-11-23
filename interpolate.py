@@ -10,37 +10,109 @@ import fileio
 import initialize
 import modeldb
 
-def getInterpModels(dimensions, whereSQLStatement, gridLimits):
-	
-	conn = modeldb.getModelDBConnection()
-	
-	positions = conn.execute('select %s %s' % 
-			(dimensions, whereSQLStatement,), gridLimits).fetchall()
-	binaryDecks = conn.execute('select deck %s' % (whereSQLStatement,),
-								gridLimits).fetchall()
+def getInterpModels(interpolatedDimensions, SQL, boundaryValues):
 
-	conn.close()
-	
-	modelGrid = []
-	for binDeck in binaryDecks:
-		deck = pickle.loads(zlib.decompress(binDeck[0]))
-		modelGrid.append(deck)
-		
-	
-	
-	return positions, np.array(modelGrid)
+    conn = modeldb.getModelDBConnection()
+    
+    dimensions = ', '.join(interpolatedDimensions)
+    
+    if len(dimensions) > 0:
+        positions = conn.execute('select %s %s' % (dimensions, SQL,),
+                                    boundaryValues).fetchall()
+        # There is a bug that if the length of each position is one, then instead
+        # of returning a tuple it should return a float
+        
+        for i, position in enumerate(positions):
+            if len(position) == 1:
+                positions[i] = position[0]
+    
+    else: positions = []    
+     
+                                    
+    binaryDecks = conn.execute('select deck %s' % (SQL,),
+                                boundaryValues).fetchall()
+    conn.close()
+    
+    modelGrid = []
+    for binDeck in binaryDecks:
+        deck = pickle.loads(zlib.decompress(binDeck[0]))
+        modelGrid.append(deck)
+        
+    
+    return positions, np.array(modelGrid)
 
 
-def interpModelGrid(modelName, Teff, logg, FeH, k=2.0, alpha = 0.0):
+def interpModelGrid(modelName, Teff, logg, FeH, k=2.0, alpha=0.0, level=1, method='linear'):
 
-	dimensions, whereSQLStatement, gridLimits = getNearestNeighbours(modelName, Teff, logg, FeH, k, alpha)
-	
+    """
+    
+    Interpolates in N-dimensional space to find the given point
+    (Teff, logg, FeH, k, alpha) given the model name.
+    
+    Parameters:
+    ===========
+    
+    modelName   : string
+                  The name of the model to lookup in your local SQL database.
 
-	modelGridCoord, modelGrid = getInterpModels(dimensions, whereSQLStatement, gridLimits)
-	return interpolate.griddata(modelGridCoord, modelGrid,
-			 (Teff, logg, FeH), method='linear')
-	
-	
+    Teff        : float
+                  The effective temperature (Teff in Kelvin) of the star you plan to interpolate for.
+              
+    FeH         : float
+                  The metallicity ([Fe/H]) of the star you plan to interpolate for.
+                
+    logg        : float
+                  The surface gravity (log g) of the star you plan to interpolate for.
+            
+    k           : float, optional (default = 2.0)
+                  The turbulence in the atmosphere of the star (km/s).
+                  
+    alpha       : float, optional (default = 0.0)
+                  The level of alpha enhancement of the star ([alpha/Fe] in dex).
+            
+    level       : integer, optional (default = 1)
+                  The maximum number of levels on either side of the point you wish to return in each
+                  dimension.
+                  
+    method      : string, optional (default = 'linear')
+                  The interpolation method which is passed to scipy.interpolate.griddata.
+                  
+                  Options are 'linear', 'nearest', or 'cubic'. 
+    
+    """
+
+    # Our grid point in N dimensionsal space
+    gridSpace = {
+                    'teff' : Teff,
+                    'logg' : logg,
+                    'feh'  : FeH,
+                    'k'    : k,
+                    'alpha': alpha
+                 }
+                
+    
+    # Find the nearest neighbours in N dimensions, and get the SQL
+    interpolatedDimensions, SQL, boundaryValues = getNearestNeighbours(modelName, Teff, logg, FeH, k, alpha, level=level)
+
+    # Populate the model grid
+    modelGridCoord, modelGrid = getInterpModels(interpolatedDimensions, SQL, boundaryValues)
+    
+    # If there are no grid points to interpolate between then no interpolation is necessary
+    if len(modelGridCoord) == 0: return modelGrid[0]
+
+    # Update our grid point based on interpolatedDimensions
+    gridPoint = []
+    for interpolatedDimension in interpolatedDimensions:
+        gridPoint.append(gridSpace[interpolatedDimension])
+        
+    
+    # Return the interpolated grid deck
+    return interpolate.griddata(modelGridCoord, modelGrid, gridPoint, method=method)
+    
+    
+    
+    
+    
 def getNearestNeighbours(model, Teff, logg, FeH, k=2.0, alpha=0.0, level=1):
 
     """
@@ -78,10 +150,10 @@ def getNearestNeighbours(model, Teff, logg, FeH, k=2.0, alpha=0.0, level=1):
 
     connection = modeldb.getModelDBConnection()
 
-    result = connection.execute('select feh, teff, logg, k, alpha from %s' % model)
+    result = connection.execute('select Teff, logg, FeH, k, alpha from `%s`' % model)
     
     # todo - consider rewriting following section into a loop?
-    FeH_grid, Teff_grid, logg_grid, k_grid, alpha_grid = zip(*result.fetchall())
+    Teff_grid, logg_grid, FeH_grid, k_grid, alpha_grid = zip(*result.fetchall())
     connection.close()
     
     grid = zip(Teff_grid, logg_grid, FeH_grid, k_grid, alpha_grid)
@@ -103,15 +175,17 @@ def getNearestNeighbours(model, Teff, logg, FeH, k=2.0, alpha=0.0, level=1):
     k_neighbours = get1Dneighbours(k_available, k, level=level)
     
     # Find the alpha available for our FeH, Teff, logg, and k restricted
-    alpha_available = [point[4] for point in grid if point[1] in FeH_neighbours and point[0] in Teff_neighbours and point[1] in logg_neighbours and point[3] in k_neighbours]
+    alpha_available = [point[4] for point in grid if point[2] in FeH_neighbours and point[0] in Teff_neighbours and point[1] in logg_neighbours and point[3] in k_neighbours]
     alpha_neighbours = get1Dneighbours(alpha_available, alpha, level=level)
     
     
     # Build the dimensions we want back from the SQL table
     
-    gridLimits = []
-    dimensions = []
-    indexDimensions = ['teff', 'logg', 'feh', 'k', 'alpha']
+    SQL = 'from `%s` where' % model
+    
+    boundaryValues = []
+    interpolatedDimensions = []
+    
     availableDimensions = {    
                             'feh'   : FeH_neighbours,
                             'teff'  : Teff_neighbours,
@@ -120,28 +194,30 @@ def getNearestNeighbours(model, Teff, logg, FeH, k=2.0, alpha=0.0, level=1):
                             'alpha' : alpha_neighbours,
                             }
                             
-    for dimension in indexDimensions:
-    	neighbours = availableDimensions[dimension]
-    		
+    for dimension, value in zip(['teff', 'logg', 'feh', 'k', 'alpha'], [Teff, logg, FeH, k, alpha]):
+        neighbours = availableDimensions[dimension]
+            
         # If only one 'neighbour' is present, then this dimension does not need to be interpolated upon
         if (len(neighbours) > 1):
-            dimensions.append(dimension)
+            interpolatedDimensions.append(dimension)
         
             # Add these limits for the sql query
-            gridLimits.append(min(neighbours))
-            gridLimits.append(max(neighbours))
+            boundaryValues.append(min(neighbours))
+            boundaryValues.append(max(neighbours))
+            
+            SQL += ' %s between ? and ? and' % dimension 
         
+        else:
         
-    # String it all together        
-    whereSql = 'from %s where ' % model + ' between ? and ? and '.join(dimensions) + ' between ? and ?'
-    dimensions = ', '.join(dimensions)
-
-    # Execute and return the SQL
-    return (dimensions, whereSql, tuple(gridLimits))
+            boundaryValues.append(value)
+            
+            SQL += ' %s = ? and' % dimension
     
-    #result = connection.execute('select %s from %s where %s' % (dimensions, model, whereSql), gridLimits)
-    #return result.fetchall()
-   
+    if SQL[-3:] == 'and': SQL = SQL[:-3]
+    
+    # Return the SQL
+    return (interpolatedDimensions, SQL, tuple(boundaryValues))
+       
     
                                    
         
@@ -180,8 +256,7 @@ def get1Dneighbours(data, point, level=1):
     
     # If there are none positive, or none negative then this point is outside the bounds of the grid
     if (1 > len(pos)) or (1 > len(neg)):
-        raise atmosphyOutOfBoundsError('the given data point (%2.4f)'
-        								' is outside the bounds of the grid' % point)
+        raise OutOfBoundsError('the given data point (%2.4f) is outside the bounds of the grid (%2.4f, %2.4f)' % (point, min(data), max(data),))
 
     # We may have duplicates of the same value, which is screwy with levels
 
@@ -197,5 +272,5 @@ def get1Dneighbours(data, point, level=1):
     return neighbours
 
 
-class atmosphyOutOfBoundsError(Exception):
+class OutOfBoundsError(Exception):
     pass

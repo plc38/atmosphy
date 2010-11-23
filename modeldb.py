@@ -16,12 +16,12 @@ def initModelTable(modelName, clobber=False):
 		"SELECT name FROM sqlite_master WHERE type='table' AND	name='%s'" 
 		% (modelName,)).fetchall()) == 1:
 		if clobber:
-			conn.execute('DROP TABLE %s' % (modelName,))
+			conn.execute('DROP TABLE `%s`' % (modelName,))
 		else:
 			raise modelDBException("Model %s already exists in database"
 								 % (modelName,))
 
-	initModelTable = """CREATE TABLE %s(	id INTEGER PRIMARY KEY,
+	initModelTable = """CREATE TABLE `%s` (	id INTEGER PRIMARY KEY,
     										teff DOUBLE,
     										logg DOUBLE,
     										feh DOUBLE,
@@ -29,7 +29,7 @@ def initModelTable(modelName, clobber=False):
     										alpha DOUBLE,
     										lh DOUBLE,
     										pradk DOUBLE,
-    										deck BLOB)"""%modelName
+    										deck BLOB)""" % modelName
 	conn.execute(initModelTable)
 	conn.commit()
 	conn.close()
@@ -38,5 +38,5 @@ def insertModelData(conn, modelName, dataTuple):
 	"Insert data into the model database"
 	dataTuple[-1] = sqlite3.Binary(dataTuple[-1])
 	conn.execute(
-		'insert into %s(teff, logg, feh, k, alpha, lh, pradk, deck)'
+		'insert into `%s` (teff, logg, feh, k, alpha, lh, pradk, deck)'
 		'values (?,?,?,?,?,?,?,?)' % (modelName,), tuple(dataTuple))

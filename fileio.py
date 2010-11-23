@@ -17,162 +17,166 @@ import fnmatch
 from ConfigParser import ConfigParser
 
 class casKurImportException(Exception):
-	pass
+    pass
+
+
 
 def importModel(modelName, srcPath, dstPath = None, clobber=False, overwrite=False, verbose=False):
-	
-	"importing model into the database"
-	
-	if dstPath == None:
-		dstPath = initialize.atmosStoragePath(modelName)
+    
+    "importing model into the database"
+    
+    if dstPath == None:
+        dstPath = initialize.atmosStoragePath(modelName)
 
-	
-	
-		
+    
+    
+        
 
     # Check to see if the destination path exists
-	if not os.path.exists(dstPath):
-		os.makedirs(dstPath)
-		
+    if not os.path.exists(dstPath):
+        os.makedirs(dstPath)
+        
 
-	modeldb.initModelTable(modelName)
-	
-	conn = modeldb.getModelDBConnection()
-	
-	for fname in glob(os.path.join(srcPath,'*.dat')):
-		modelSrc = file(fname).read()
-		modelsRawData = re.split('B?EGIN\s+ITERATION\s+\d+\s+COMPLETED',modelSrc)
-		
-		for model in modelsRawData:
-			#problem with split
-			if model == '\n' or model == '': continue
-			
-			teffLoggMatch = re.search('T?EFF\s+(\d+\.\d*)\s+GRAVITY\s+(\d+\.\d*)',model)
-			
-			#searching for metallicity, alpha and microturbulence
-			metalAlphaMatch = re.search('\[([+-]?\d+\.\d+)([ab]?)\]', model)
-			microMatch = re.search('VTURB[ =]?(\d+\.\d+)',model)
-			mixLengthMatch = re.search('ONVECTION (OFF|ON)\s+(\d+\.\d+)',model)
-			pradkMatch = re.search('P?RADK (\d+\.\d+E[+-]?\d+)',model)
-			
-			#Checking the integrity of the model
+    modeldb.initModelTable(modelName)
+    
+    conn = modeldb.getModelDBConnection()
+    
+    for fname in glob(os.path.join(srcPath,'*.dat')):
+        modelSrc = file(fname).read()
+        modelsRawData = re.split('B?EGIN\s+ITERATION\s+\d+\s+COMPLETED',modelSrc)
+        
+        for model in modelsRawData:
+            #problem with split
+            if model == '\n' or model == '': continue
+            
+            teffLoggMatch = re.search('T?EFF\s+(\d+\.\d*)\s+GRAVITY\s+(\d+\.\d*)',model)
+            
+            #searching for metallicity, alpha and microturbulence
+            metalAlphaMatch = re.search('\[([\s+-]?\d+\.\d+)([aAbB]?)\]?', model)
+            microMatch = re.search('VTURB[ =]?(\d+[\.\d+]?)',model)
+            mixLengthMatch = re.search('ONVECTION (OFF|ON)\s+(\d+\.\d+)',model)
+            pradkMatch = re.search('P?RADK (\d+\.\d+E[+-]?\d+)',model)
+            
+            #Checking the integrity of the model
 
-			if teffLoggMatch == None:
-				raise casKurImportException(
-					"Current Model does not contain effective temperature:"
-					"\n\n--------\n\n%s" % (model,))
-	
-				
-				
-			try:					
-				if metalAlphaMatch == None:
-					raise casKurImportException(
-						"Current Model does not contain metallicity information:"
-						"\n\n--------\n\n%s" % (model,))
-			except casKurImportException:
-				knownProblemFiles = ['ap00k2.dat','ap00k4.dat','asun.dat']
-				if os.path.basename(fname) in knownProblemFiles:
-					continue
-				else:
-					raise casKurImportException(
-						"Current Model does not contain metallicity information:"
-						"\n\n--------\n\n%s" % (model,))
-				
-			if mixLengthMatch == None:
-				raise casKurImportException(
-					"Current Model does not contain mixing length information:"
-					"\n\n--------\n\n%s" % (model,))
-	
-			
-			#reading in the model parameters
-			convertAlpha = {'':0.0, 'a':0.4, 'b':1.0}
-			
-			teff	= float(teffLoggMatch.groups()[0])
-			logg 	= float(teffLoggMatch.groups()[1])
-			feh		= float(metalAlphaMatch.groups()[0])
-			alpha 	= convertAlpha[metalAlphaMatch.groups()[1]]
-			micro	= float(microMatch.groups()[0])
-			mixing 	= float(mixLengthMatch.groups()[1])
-			pradk	= float(pradkMatch.groups()[0])
-			
-			#reading model, pickling it and compressing it
-			deck = readDeck(model)
-			zipdDeck = zlib.compress(pickle.dumps(deck))
-			
-			#writing to db
-			modeldb.insertModelData(conn, modelName, [teff, logg, feh, micro, alpha, mixing, pradk, zipdDeck])
-		
-	conn.commit()
-	conn.close()
-	
+            if teffLoggMatch == None:
+                raise casKurImportException(
+                    "Current Model does not contain effective temperature:"
+                    "\n\n--------\n\n%s" % (model,))
+    
+                
+                
+            try:                    
+                if metalAlphaMatch == None:
+                    raise casKurImportException(
+                        "Current Model does not contain metallicity information:"
+                        "\n\n--------\n\n%s" % (model,))
+            except casKurImportException:
+                knownProblemFiles = ['ap00k2.dat','ap00k4.dat','asun.dat']
+                if os.path.basename(fname) in knownProblemFiles:
+                    continue
+                else:
+                    raise casKurImportException(
+                        "Current Model does not contain metallicity information:"
+                        "\n\n--------\n\n%s" % (model,))
+                
+            if mixLengthMatch == None:
+                raise casKurImportException(
+                    "Current Model does not contain mixing length information:"
+                    "\n\n--------\n\n%s" % (model,))
+    
+            
+            #reading in the model parameters
+            convertAlpha = {'':0.0, 'a':0.4, 'b':1.0}
+            
+            teff    = float(teffLoggMatch.groups()[0])
+            logg     = float(teffLoggMatch.groups()[1])
+            feh        = float(metalAlphaMatch.groups()[0])
+            alpha     = convertAlpha[metalAlphaMatch.groups()[1].lower()]
+            micro    = float(microMatch.groups()[0])
+            mixing     = float(mixLengthMatch.groups()[1])
+            pradk    = float(pradkMatch.groups()[0])
+            
+            #reading model, pickling it and compressing it
+            deck = readDeck(model)
+            zipdDeck = zlib.compress(pickle.dumps(deck))
+            
+            #writing to db
+            modeldb.insertModelData(conn, modelName, [teff, logg, feh, micro, alpha, mixing, pradk, zipdDeck])
+        
+    conn.commit()
+    conn.close()
+    
 
-			 
+             
 
-		
-	
+        
+    
 def getNextLine(dataIter):
-	try:
-		return dataIter.next().strip()
-	except:
-		raise casKurImportException('End of File before model end')
+    try:
+        return dataIter.next().strip()
+    except:
+        raise casKurImportException('End of File before model end')
 
 def readDeck(modelString):
-	data = []
-	rawIter = iter(re.split('\r|\n',modelString))
-	deckStart = "READ DECK6"
-	while True:
-		line = getNextLine(rawIter)
-		if re.match("^R?EAD DECK.*",line) !=None: 
-			break
-		
-	while True:
-			line = getNextLine(rawIter)
-			
-			if re.match("^P?RADK.*",line) != None:
-				break
-			data.append([float(item) for item in line.split()])
-	return np.array(data)
-	
-class casKurModel(object):
-	#Parsing a single caskur model and storing it in a datastructure
-	@classmethod
-	def fromFile(cls, fname):
-		#reading in the raw string from a file with a single caskur Model
-		fileData = file(fname).read()
-		if len(re.split('BEGIN\s+ITERATION\s+\d+\s+COMPLETED',fileData))>2:
-			raise casKurImportException("File contains multiple Models")
+    data = []
+    rawIter = iter(re.split('\r|\n',modelString))
+    deckStart = "READ DECK6"
+    while True:
+        line = getNextLine(rawIter)
+        if re.match("^R?EAD DECK.*",line) !=None: 
+            break
+        
+    while True:
+            line = getNextLine(rawIter)
+            
+            if re.match("^P?RADK.*",line) != None:
+                break
 
-		return cls(fileData)
-	
-	def __init__(self,rawData):
-		#modeldata
-		data = []
-		
-		rawData = rawData.split("\r")
-		rawIter = iter(rawData)
-		#Looking for teff,logg, basically beginning of model
-		while True:
-			line = getNextLine(rawIter)
-			tempLoggMatch = re.match("TEFF\s+(\d+\.\d*)\s+GRAVITY\s+(\d+\.\d*)\s+(\w+)\s*",line)
-			if tempLoggMatch != None:
-				self.teff = float(tempLoggMatch.groups()[0])
-				self.logg = float(tempLoggMatch.groups()[1])
-				self.modelType = tempLoggMatch.groups()[2]
-				break
-		#Looking for Deck
-		deckStart = "READ DECK6" # match EAD DECK6?
-		while True:
-			line = getNextLine(rawIter)
-			if line.startswith(deckStart): break
-			
-		while True:
-			line = getNextLine(rawIter)
-			if line.startswith("PRADK"): # match RADK?
-				self.pradk = float(line.split()[1])
-				break
-			data.append([float(item) for item in line.split()])
-		self.data = np.array(data)
-		
+            data.append([float(item) for item in re.sub('\s+|(?<!E)[-|\s]', ' \g<0>', line).split()])
+
+    return np.array(data)
+    
+class casKurModel(object):
+    #Parsing a single caskur model and storing it in a datastructure
+    @classmethod
+    def fromFile(cls, fname):
+        #reading in the raw string from a file with a single caskur Model
+        fileData = file(fname).read()
+        if len(re.split('BEGIN\s+ITERATION\s+\d+\s+COMPLETED',fileData))>2:
+            raise casKurImportException("File contains multiple Models")
+
+        return cls(fileData)
+    
+    def __init__(self,rawData):
+        #modeldata
+        data = []
+        
+        rawData = rawData.split("\r")
+        rawIter = iter(rawData)
+        #Looking for teff,logg, basically beginning of model
+        while True:
+            line = getNextLine(rawIter)
+            tempLoggMatch = re.match("TEFF\s+(\d+\.\d*)\s+GRAVITY\s+(\d+\.\d*)\s+(\w+)\s*",line)
+            if tempLoggMatch != None:
+                self.teff = float(tempLoggMatch.groups()[0])
+                self.logg = float(tempLoggMatch.groups()[1])
+                self.modelType = tempLoggMatch.groups()[2]
+                break
+        #Looking for Deck
+        deckStart = "READ DECK6" # match EAD DECK6?
+        while True:
+            line = getNextLine(rawIter)
+            if line.startswith(deckStart): break
+            
+        while True:
+            line = getNextLine(rawIter)
+            if line.startswith("PRADK"): # match RADK?
+                self.pradk = float(line.split()[1])
+                break
+            data.append([float(item) for item in line.split()])
+        self.data = np.array(data)
+        
 
 
   
@@ -186,7 +190,7 @@ def availableModels():
     
     """
     
-    configFilename = initialize.atmosStoragePath('models.d')
+    configFilename = initialize.atmosStoragePath('conf.d')
     
     parser = ConfigParser()
     parser.read(configFilename)
@@ -201,7 +205,7 @@ def availableModels():
     return availableModels
     
     
-def generateMOOG(Teff, logg, FeH, nTau, deck):
+def formatMOOG(Teff, logg, FeH, deck):
 
     """
     
@@ -219,18 +223,15 @@ def generateMOOG(Teff, logg, FeH, nTau, deck):
         
         FeH     :   float
                     The metallicity ([Fe/H]) of the model star.
-                
-        nTau    :   float
-                    The nTau value of the model atmosphere.
                     
         deck    :   array-type
-                    The full (floating point) deck values for the model atmosphere.
+                    The full deck values for the model atmosphere.
                          
                          
     Examples:
     =========
     
-        MOOGformatting = generateMOOG(5000.0, 2.0, -3.0, 1.672, [[3.02342, ... 5.23423], ..., [1.3423, ..., 8.233423]])
+        MOOGformatting = formatMOOG(5000.0, 2.0, -3.0, [[3.02342, ... 5.23423], ..., [1.3423, ..., 8.233423]])
         
         myfile = open('modelatmosphere.mod', 'w')
         myfile.write(MOOGformatting)
@@ -240,9 +241,8 @@ def generateMOOG(Teff, logg, FeH, nTau, deck):
         
         
     """
-    # todo - does nTau value need to be interpolated between like the deck?
 
-    if (type(deck) == type(None)):
+    if type(deck) is type(None):
         raise ValueError('deck is missing')
         
     # Generate the output file name
@@ -251,10 +251,10 @@ def generateMOOG(Teff, logg, FeH, nTau, deck):
     
 
     content  = "KURUCZ\n"
-    content += "          TEFF   %6.0f.  GRAVITY %2.5f LTE\n" % (Teff, logg,)
-    # todo - do we need to specify anything else here?
+    content += "          TEFF" + " " * (7 - len(str(Teff))) + "%6.0f.  GRAVITY %2.5f LTE\n" % (Teff, logg,)
+
     
-    content += "NTAU        %2.0f\n" % (nTau,)
+    content += "NTAU        %2.0f\n" % (len(deck),)
     
     for line in deck:
         
@@ -263,23 +263,19 @@ def generateMOOG(Teff, logg, FeH, nTau, deck):
         
         # Since columns 1 and 2 have different formatting, then all the rest have the same
         # we will fill the rest
-        tempLine = " %1.8E" +  " " * (7 - len(round(Teff))) + "%5.1f" + " %1.3E" * (len(line) - 2) + "\n"
-        content += tempLine % line
+        tempLine = " %1.8E" +  " " * (9 - len(str(line[1]))) + "%5.1f" + " %1.3E" * (len(line) - 2) + "\n"
+        content += tempLine % tuple(line,)
         
     content += "          2\n"
     content += "Natoms        0          %2.1f\n" % (FeH,)
     content += "NMOL          0\n"
 
-    #moog = open(output, 'w')
-    #moog.write(content)
-    #moog.close()
-    
     return content
     
 
 
       
-def download(modelNames, overwrite=False, verbose=True, dbPath=initialize.atmosStoragePath('atmosphy.db3')):
+def download(modelNames='*', overwrite=False, verbose=True, dbPath=initialize.atmosStoragePath('atmosphy.db3')):
 
     """
     
@@ -398,7 +394,7 @@ def download(modelNames, overwrite=False, verbose=True, dbPath=initialize.atmosS
                 newFile = open(fullPath, 'w')
                 newFile.write(data)
                 newFile.close()
-		
+        
         
         # Import the model into the database
         srcPath = os.path.join(modelsPath, modelName)
@@ -408,7 +404,8 @@ def download(modelNames, overwrite=False, verbose=True, dbPath=initialize.atmosS
             print 'Importing model...'
         importModel(modelName, srcPath, dstPath, overwrite=overwrite, verbose=verbose)
 
-    
+        if verbose:
+            print 'Done!'
     
 
-	
+    
