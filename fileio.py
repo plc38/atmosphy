@@ -203,7 +203,19 @@ def availableModels():
         availableModels[modelName] = parser.get(modelName, 'description')
         
     return availableModels
+
+def installedModels():
+    """
+    Reads from the database and returns the models on disk
     
+    """
+    conn = modeldb.getModelDBConnection()
+    modelData = conn.execute("SELECT name FROM sqlite_master WHERE type='table'")
+    modelNames=([str(item[0]) for item in modelData])
+
+    #modelNames.remove('models')
+    
+    return modelNames
     
 def formatMOOG(Teff, logg, FeH, deck):
 
@@ -319,7 +331,7 @@ def download(modelNames='*', overwrite=False, verbose=True, dbPath=initialize.at
 
     
     modelsPath = initialize.atmosStoragePath('models/')
-    configFilename = initialize.atmosStoragePath('conf.d')
+    configFilename = initialize.atmosStoragePath('config.ini')
     
     parser = ConfigParser()
     if not os.path.exists(dbPath): raise ValueError, 'no database file found in %s' % dbPath

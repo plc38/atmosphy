@@ -29,17 +29,11 @@ def getInterpModels(interpolatedDimensions, SQL, boundaryValues):
     else: positions = []    
      
                                     
-    binaryDecks = conn.execute('select deck %s' % (SQL,),
+    modelGrid = conn.execute('select deck %s' % (SQL,),
                                 boundaryValues).fetchall()
     conn.close()
     
-    modelGrid = []
-    for binDeck in binaryDecks:
-        deck = pickle.loads(zlib.decompress(binDeck[0]))
-        modelGrid.append(deck)
-        
-    
-    return positions, np.array(modelGrid)
+    return positions, np.array(zip(*modelGrid)[0])
 
 
 def interpModelGrid(modelName, Teff, logg, FeH, k=2.0, alpha=0.0, level=1, method='linear'):
@@ -105,7 +99,7 @@ def interpModelGrid(modelName, Teff, logg, FeH, k=2.0, alpha=0.0, level=1, metho
     for interpolatedDimension in interpolatedDimensions:
         gridPoint.append(gridSpace[interpolatedDimension])
         
-    
+    print np.array(modelGridCoord).shape, np.array(modelGrid).shape, np.array(gridPoint).shape
     # Return the interpolated grid deck
     return interpolate.griddata(modelGridCoord, modelGrid, gridPoint, method=method)
     

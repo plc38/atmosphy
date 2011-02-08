@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import argparse
-
+import sys
 
 import atmosphy.initialize as initialize
 import atmosphy.interpolate as ainterp
@@ -58,6 +58,7 @@ if __name__ == '__main__':
     if args.modelgrid not in fileio.installedModels():
         print "Modelgrid %s not available. Please install the following way:\n" % args.modelgrid
         print "atmosphy_getgrid %s\n\n" % args.modelgrid
+        sys.exit(-1)
         
     deck = ainterp.interpModelGrid(args.modelgrid, args.teff, args.logg, args.feh, args.k, args.alpha)
     

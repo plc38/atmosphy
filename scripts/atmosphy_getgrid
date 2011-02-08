@@ -2,7 +2,6 @@
 
 import argparse
 
-
 import atmosphy.initialize as initialize
 import atmosphy.fileio as fileio
 
@@ -21,7 +20,7 @@ parser.add_argument("modelName",
 def getModel(modelName):
     try:
         fileio.download(modelName, verbose=True)
-    except fileio.modelError:
+    except fileio.casKurImportException:
         print "\n\n%s does not exist\n" % modelName
         printModels()
                     

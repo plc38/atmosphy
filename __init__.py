@@ -5,7 +5,7 @@ from shutil import copyfile
 # Generate the once-off ~/.atmosphy directory
 atmosphyUserPath = os.path.expanduser('~/.atmosphy')
 if not os.path.exists(atmosphyUserPath):
-    os.makedir(atmosphyUserPath)
+    os.makedirs(atmosphyUserPath)
 
 # Copy the config file into the user home directory
 if not os.path.exists(os.path.join(atmosphyUserPath, 'conf.d')):
