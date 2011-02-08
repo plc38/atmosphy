@@ -1,0 +1,38 @@
+#!/usr/bin/env python
+
+import argparse
+
+
+import atmosphy.initialize as initialize
+import atmosphy.fileio as fileio
+
+
+availModels = '\n'.join(["name: %s | description: %s"%item for item in fileio.availableModels().items()])
+
+usage="Usage: %prog modelGridName catalogue [options]"
+
+parser=argparse.ArgumentParser(
+        description="Downloads model grids",)
+
+parser.add_argument("modelName",
+                    help="ModelName to download and install",
+                    type=str)
+
+def getModel(modelName):
+    try:
+        fileio.download(modelName, verbose=True)
+    except fileio.modelError:
+        print "\n\n%s does not exist\n" % modelName
+        printModels()
+                    
+def printModels():
+     print "These Models are currently available:\n"
+     print "----------------\n"
+     print availModels
+     
+
+if __name__ == '__main__':
+    args = parser.parse_args()
+    getModel(args.modelName)
+
+

@@ -6,7 +6,7 @@ import sqlite3
 from glob import glob
 import numpy as np
 import urllib2
-import zlib
+import bz2
 import cPickle as pickle
 
 
@@ -99,10 +99,10 @@ def importModel(modelName, srcPath, dstPath = None, clobber=False, overwrite=Fal
             
             #reading model, pickling it and compressing it
             deck = readDeck(model)
-            zipdDeck = zlib.compress(pickle.dumps(deck))
+            bz2Deck = bz2.compress(pickle.dumps(deck))
             
             #writing to db
-            modeldb.insertModelData(conn, modelName, [teff, logg, feh, micro, alpha, mixing, pradk, zipdDeck])
+            modeldb.insertModelData(conn, modelName, [teff, logg, feh, micro, alpha, mixing, pradk, bz2Deck])
         
     conn.commit()
     conn.close()
