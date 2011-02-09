@@ -265,7 +265,8 @@ def formatMOOG(Teff, logg, FeH, deck):
     content  = "KURUCZ\n"
     content += "          TEFF" + " " * (7 - len(str(Teff))) + "%6.0f.  GRAVITY %2.5f LTE\n" % (Teff, logg,)
 
-    
+    if len(deck.shape) == 3:
+        deck = deck[0]
     content += "NTAU        %2.0f\n" % (len(deck),)
     
     for line in deck:
