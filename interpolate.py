@@ -10,6 +10,11 @@ import fileio
 import initialize
 import modeldb
 
+#TODO:
+# 1 check what happens with different deck sizes in caskur 72,9 and 71,9
+# 2 what's wrong with different dimensions coming out of the grid
+
+
 def getInterpModels(interpolatedDimensions, SQL, boundaryValues):
 
     conn = modeldb.getModelDBConnection()

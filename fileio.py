@@ -264,9 +264,15 @@ def formatMOOG(Teff, logg, FeH, deck):
 
     content  = "KURUCZ\n"
     content += "          TEFF" + " " * (7 - len(str(Teff))) + "%6.0f.  GRAVITY %2.5f LTE\n" % (Teff, logg,)
-
-    if len(deck.shape) == 3:
-        deck = deck[0]
+    
+    while True:
+        if len(deck.shape) == 2:
+            break
+        elif len(deck.shape) > 2:
+            deck = deck[0]
+        elif len(deck.shape) < 2: raise ValueError
+        
+        
     content += "NTAU        %2.0f\n" % (len(deck),)
     
     for line in deck:
@@ -333,7 +339,7 @@ def download(modelNames='*', overwrite=False, verbose=True, dbPath=initialize.at
     
     modelsPath = initialize.atmosStoragePath('models/')
     configFilename = initialize.atmosStoragePath('config.ini')
-    
+    print configFilename
     parser = ConfigParser()
     if not os.path.exists(dbPath): raise ValueError, 'no database file found in %s' % dbPath
     if not os.path.exists(configFilename): raise ValueError, 'no configuration file found in %s' % configFilename
@@ -351,7 +357,7 @@ def download(modelNames='*', overwrite=False, verbose=True, dbPath=initialize.at
     for modelName in modelNames:
         modelMatches = modelMatches + fnmatch.filter(availableModels, modelName.lower())
     
-    
+    print availableModels
     if (1 > len(modelMatches)): raise ValueError, 'no models found.'
     
     # Get the regular expression patterns for each model name
