@@ -6,7 +6,7 @@ import atmosphy.initialize as initialize
 import atmosphy.fileio as fileio
 
 
-availModels = '\n'.join(["name: %s | description: %s"%item for item in fileio.availableModels().items()])
+availModels = '\n'.join(["name: %s | description: %s" % item for item in fileio.availableModels().items()])
 
 usage="Usage: %prog modelGridName catalogue [options]"
 
