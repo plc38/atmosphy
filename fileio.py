@@ -117,6 +117,11 @@ def importModel(modelName, srcPath, dstPath = None, clobber=False, overwrite=Fal
             
             #reading model, pickling it and compressing it
             deck = readDeck(model)
+            
+            #fix for deck with only 71 points (there seems to be only one in ap05k2odfnew.dat)
+            if modelName == 'castelli-kurucz' and deck.shape[0] == 71:
+                continue
+                
             bz2Deck = bz2.compress(pickle.dumps(deck))
             
             #writing to db
@@ -300,7 +305,8 @@ def formatMOOG(Teff, logg, FeH, deck):
         
         # Since columns 1 and 2 have different formatting, then all the rest have the same
         # we will fill the rest
-        tempLine = " %1.8E" +  " " * (9 - len(str(line[1]))) + "%5.1f" + " %1.3E" * (len(line) - 2) + "\n"
+        tempLine = "% 2.8E% 9.1E" + (len(line) - 2) * "% 2.3E" + "\n"
+        #tempLine = " %1.8E" +  " " * (9 - len(str(line[1]))) + "%5.1f" + " %1.3E" * (len(line) - 2) + "\n"
         content += tempLine % tuple(line,)
         
     content += "          2\n"

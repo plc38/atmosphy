@@ -1,0 +1,15 @@
+create table ATMOSPHY_CONF(
+    ID integer primary key,
+    MODEL_NAME text,
+    MODEL_SHORT text,
+    DESCRIPTION text,
+    BIBTEX text,
+    BIBITEM text,
+    INSTALLED integer)
+    
+create table ATMOSPHY_URLS(
+    ID integer primary key,
+    MODEL_ID integer,
+    URL text,
+    MD5_HASH integer
+    foreign key(MODEL_ID) references ATMOSPHY_CONF(ID))
