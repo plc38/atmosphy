@@ -9,14 +9,13 @@ def convertBzipPickle(bzipPickle):
 class modelDBException(Exception):
     pass
 
-def getModelDBConnection():
-    "returns a connection to the modelDB"
-        
-    return sqlite3.connect(initialize.atmosStoragePath('atmosphy.db3'),
-                detect_types=sqlite3.PARSE_DECLTYPES)
+class database:
+    def __init__(self):
+        self.filename = '~/.atmosphy/atmosphy.db3'
+        return sqlite3.connect(os.path.expanduser(self.filename),
+                               detect_types=sqlite3.PARSE_DECLTYPES)
 
-
-
+"""
 def initModelTable(modelName, clobber=False):
     "Creating Model Table"
 
@@ -42,7 +41,8 @@ def initModelTable(modelName, clobber=False):
     conn.execute(initModelTable)
     conn.commit()
     conn.close()
-    
+"""
+
 def insertModelData(conn, modelName, dataTuple):
     "Insert data into the model database"
     dataTuple[-1] = sqlite3.Binary(dataTuple[-1])
