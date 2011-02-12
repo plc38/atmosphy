@@ -8,10 +8,18 @@ import numpy as np
 import urllib2
 import bz2
 import cPickle as pickle
+import hashlib
 
 
 import initialize
 import modeldb
+import logging, logging.config
+
+
+# Establish logging parameters from ~/.atmosphy/logging.conf
+
+logging.config.fileConfig(atmosphyUserPath + '/logging.conf')
+
 
 import fnmatch
 from ConfigParser import ConfigParser
@@ -19,6 +27,16 @@ from ConfigParser import ConfigParser
 class casKurImportException(Exception):
     pass
 
+
+def md5_file(filename):
+    import hashlib
+    md5 = hashlib.md5()
+    
+    with open(filename,'rb') as f:
+        for chunk in iter(lambda: f.read(128*md5.block_size), ''): 
+             md5.update(chunk)
+             
+    return md5.digest()
 
 
 def importModel(modelName, srcPath, dstPath = None, clobber=False, overwrite=False, verbose=False):
@@ -300,7 +318,7 @@ def formatMOOG(Teff, logg, FeH, deck):
 
 
       
-def download(modelNames='*', overwrite=False, clobberDB=False, verbose=True, dbPath=initialize.atmosStoragePath('atmosphy.db3')):
+def download(models='*', clobber=False, verbose=True, database='~/.atmosphy/atmosphy.db3'):
 
     """
     
@@ -343,11 +361,11 @@ def download(modelNames='*', overwrite=False, clobberDB=False, verbose=True, dbP
     """
 
     
-    modelsPath = initialize.atmosStoragePath('models/')
-    configFilename = initialize.atmosStoragePath('config.ini')
-    print configFilename
-    parser = ConfigParser()
-    if not os.path.exists(dbPath): raise ValueError, 'no database file found in %s' % dbPath
+    atmosphy_path = '~/.atmosphy/'
+    
+    models_path = atmosphy_path + 'models/'
+
+    if not os.path.exists(database): raise ValueError, 'no database file found in %s' % dbPath
     if not os.path.exists(configFilename): raise ValueError, 'no configuration file found in %s' % configFilename
     
     parser.read(configFilename)
@@ -403,7 +421,9 @@ def download(modelNames='*', overwrite=False, clobberDB=False, verbose=True, dbP
             fullPath = os.path.join(modelsPath, modelName, modelFile.split('/')[-1])
             fileExists = os.path.exists(fullPath)
             
-            if (overwrite and fileExists) or not fileExists:
+                
+            #if (md5_file(fullPath) != '') or not fileExists:
+            if not fileExists:
                 
                 if verbose and not fileExists: print 'Writing %s from %s' % (fullPath, modelFile)
                 if fileExists:
@@ -414,11 +434,16 @@ def download(modelNames='*', overwrite=False, clobberDB=False, verbose=True, dbP
                 data = stream.read()
                 stream.close()
                 
-
-                
                 newFile = open(fullPath, 'w')
                 newFile.write(data)
                 newFile.close()
+                
+                
+                # Check the MD5 checksum of this file
+                MD5_checksum = md5_file(fullPath)
+                if (MD5_checksum != ''):
+                    logging.warning('[MD5 checksum for file "%s" did not match expected. Expected "%s", calculated "%s"' % (fullPath, ' ', MD5_checksum, ))
+            
         
         
         # Import the model into the database
@@ -429,8 +454,8 @@ def download(modelNames='*', overwrite=False, clobberDB=False, verbose=True, dbP
             print 'Importing model...'
         importModel(modelName, srcPath, dstPath, overwrite=clobberDB, verbose=verbose)
 
-        if verbose:
-            print 'Done!'
+        logging.info('Successfully imported %s model' % (modelName,))
+        if verbose: print 'Done!'
     
 
     
