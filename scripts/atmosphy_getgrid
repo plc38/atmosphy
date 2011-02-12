@@ -4,7 +4,7 @@ import argparse
 
 import atmosphy.initialize as initialize
 import atmosphy.fileio as fileio
-
+import atmosphy.modeldb as modeldb
 
 availModels = '\n'.join(["name: %s | description: %s" % item for item in fileio.availableModels().items()])
 
@@ -16,13 +16,18 @@ parser=argparse.ArgumentParser(
 parser.add_argument("modelName",
                     help="ModelName to download and install",
                     type=str)
+parser.add_argument("--clobberdb",
+                    help="Overwrite Model even if already in database",
+                    action='store_true')
 
-def getModel(modelName):
+def getModel(modelName, clobberDB=False):
     try:
-        fileio.download(modelName, verbose=True)
+        fileio.download(modelName, verbose=True, clobberDB=clobberDB)
     except fileio.casKurImportException:
         print "\n\n%s does not exist\n" % modelName
         printModels()
+        
+        
                     
 def printModels():
      print "These Models are currently available:\n"
@@ -32,6 +37,6 @@ def printModels():
 
 if __name__ == '__main__':
     args = parser.parse_args()
-    getModel(args.modelName)
+    getModel(args.modelName, clobberDB=args.clobberdb)
 
 

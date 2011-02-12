@@ -7,7 +7,10 @@ def convertBzipPickle(bzipPickle):
     return pickle.loads(bz2.decompress(bzipPickle))
 
 class modelDBException(Exception):
-	pass
+    pass
+
+class modelExistsException(Exception):
+    pass
 
 def getModelDBConnection():
 	"returns a connection to the modelDB"
@@ -25,7 +28,7 @@ def initModelTable(modelName, clobber=False):
 		if clobber:
 			conn.execute('DROP TABLE `%s`' % (modelName,))
 		else:
-			raise modelDBException("Model %s already exists in database"
+			raise modelExistsException("Model %s already exists in database"
 								 % (modelName,))
 
 	initModelTable = """CREATE TABLE `%s` (	id INTEGER PRIMARY KEY,

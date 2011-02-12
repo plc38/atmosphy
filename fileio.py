@@ -300,7 +300,7 @@ def formatMOOG(Teff, logg, FeH, deck):
 
 
       
-def download(modelNames='*', overwrite=False, verbose=True, dbPath=initialize.atmosStoragePath('atmosphy.db3')):
+def download(modelNames='*', overwrite=False, clobberDB=False, verbose=True, dbPath=initialize.atmosStoragePath('atmosphy.db3')):
 
     """
     
@@ -427,7 +427,7 @@ def download(modelNames='*', overwrite=False, verbose=True, dbPath=initialize.at
         
         if verbose:
             print 'Importing model...'
-        importModel(modelName, srcPath, dstPath, overwrite=overwrite, verbose=verbose)
+        importModel(modelName, srcPath, dstPath, overwrite=clobberDB, verbose=verbose)
 
         if verbose:
             print 'Done!'

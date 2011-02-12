@@ -5,11 +5,70 @@ create table ATMOSPHY_CONF(
     DESCRIPTION text,
     BIBTEX text,
     BIBITEM text,
-    INSTALLED integer)
+    INSTALLED integer);
     
 create table ATMOSPHY_URLS(
     ID integer primary key,
     MODEL_ID integer,
     URL text,
-    MD5_HASH integer
-    foreign key(MODEL_ID) references ATMOSPHY_CONF(ID))
+    MD5_HASH integer,
+    foreign key(MODEL_ID) references ATMOSPHY_CONF(ID));
+    
+-- castelli kurucz configuration    
+
+insert into ATMOSPHY_CONF(MODEL_NAME, 
+                          MODEL_SHORT,
+                          DESCRIPTION,
+                          BIBTEX,
+                          BIBITEM,
+                          INSTALLED)
+            VALUES('castelli-kurucz',
+                   'caskur',
+                   'Castelli-Kurucz ATLAS9 model atmospheres and fluxes (l/H=1.25 only, no alpha enhancement. See http://arxiv.org/abs/astro-ph/0405087)',
+                   '@ARTICLE{2004astro.ph..5087C,
+   author = {{Castelli}, F. and {Kurucz}, R.~L.},
+    title = "{New Grids of ATLAS9 Model Atmospheres}",
+  journal = {ArXiv Astrophysics e-prints},
+   eprint = {arXiv:astro-ph/0405087},
+ keywords = {Astrophysics},
+     year = 2004,
+    month = may,
+   adsurl = {http://adsabs.harvard.edu/abs/2004astro.ph..5087C},
+  adsnote = {Provided by the SAO/NASA Astrophysics Data System}
+}
+
+',
+                    '\bibitem[Castelli 
+\& Kurucz(2004)]{2004astro.ph..5087C} Castelli, F., \& Kurucz, R.~L.\ 2004, arXiv:astro-ph/0405087 
+
+',
+                    0);
+
+
+-- kurucz
+insert into ATMOSPHY_CONF(MODEL_NAME, 
+                          MODEL_SHORT,
+                          DESCRIPTION,
+                          BIBTEX,
+                          BIBITEM,
+                          INSTALLED)
+                          
+                          VALUES('kurucz',
+                                 'kur',
+                                 'A grid of LTE model atmospheres is presented for effective temperatures ranging from 5500 to 50,000 K, gravities from the main sequence down to the radiation-pressure limit, and abundances solar, 1/10 solar, and 1/100 solar.',
+                          '@ARTICLE{1979ApJS...40....1K,
+   author = {{Kurucz}, R.~L.},
+    title = "{Model atmospheres for G, F, A, B, and O stars}",
+  journal = {\apjs},
+ keywords = {ATMOSPHERIC MODELS, EARLY STARS, F STARS, G STARS, LINE SPECTRA, STELLAR ATMOSPHERES, STELLAR MODELS, A STARS, ABUNDANCE, B STARS, BALMER SERIES, DISTRIBUTION FUNCTIONS, ERROR ANALYSIS, O STARS, OPACITY, RADIATION PRESSURE, SOLAR ATMOSPHERE, SOLAR SIMULATION, SPECTROPHOTOMETRY, STATISTICAL ANALYSIS, TABLES (DATA), TEMPERATURE EFFECTS},
+     year = 1979,
+    month = may,
+   volume = 40,
+    pages = {1-340},
+      doi = {10.1086/190589},
+   adsurl = {http://adsabs.harvard.edu/abs/1979ApJS...40....1K},
+  adsnote = {Provided by the SAO/NASA Astrophysics Data System}
+}',                         
+                                 '\bibitem[Kurucz(1979)]{1979ApJS...40....1K} Kurucz, R.~L.\ 1979, \apjs, 40, 
+1',0);
+
