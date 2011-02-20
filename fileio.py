@@ -18,7 +18,7 @@ import logging, logging.config
 
 # Establish logging parameters from ~/.atmosphy/logging.conf
 
-logging.config.fileConfig(atmosphyUserPath + '/logging.conf')
+#logging.config.fileConfig(atmosphyUserPath + '/logging.conf')
 
 
 import fnmatch
@@ -36,30 +36,20 @@ def md5_file(filename):
         for chunk in iter(lambda: f.read(128*md5.block_size), ''): 
              md5.update(chunk)
              
-    return md5.digest()
+    return md5.hexdigest()
 
 
-def importModel(modelName, srcPath, dstPath = None, clobber=False, overwrite=False, verbose=False):
+def importModel(modelName, modelID):
     
     "importing model into the database"
     
-    if dstPath == None:
-        dstPath = initialize.atmosStoragePath(modelName)
-
     
+    atmosphy_path = os.path.expanduser('~/.atmosphy')
     
-        
-
-    # Check to see if the destination path exists
-    if not os.path.exists(dstPath):
-        os.makedirs(dstPath)
-        
-
-    modeldb.initModelTable(modelName)
-    
-    conn = modeldb.getModelDBConnection()
-    
-    for fname in glob(os.path.join(srcPath,'*.dat')):
+    conn = modeldb.getModelDBConn()
+    deckShape = conn.execute('select ROWS, COLS from ATMOSPHY_CONF '
+                             'where MODEL_NAME=?', (modelName,)).fetchone()
+    for fname in glob(os.path.join(atmosphy_path, 'models', modelName, '*.dat')):
         modelSrc = file(fname).read()
         modelsRawData = re.split('B?EGIN\s+ITERATION\s+\d+\s+COMPLETED',modelSrc)
         
@@ -118,15 +108,24 @@ def importModel(modelName, srcPath, dstPath = None, clobber=False, overwrite=Fal
             #reading model, pickling it and compressing it
             deck = readDeck(model)
             
+            
             #fix for deck with only 71 points (there seems to be only one in ap05k2odfnew.dat)
             if modelName == 'castelli-kurucz' and deck.shape[0] == 71:
                 continue
-                
-            bz2Deck = bz2.compress(pickle.dumps(deck))
+            if deck.shape != deckShape:
+                raise ValueError('Deck shape missmatch: expected: %s got %s\n'
+                                 'This should not happen please contact the developers of atmosphy' %
+                                 (deckShape, deck.shape))
+            
             
             #writing to db
-            modeldb.insertModelData(conn, modelName, [teff, logg, feh, micro, alpha, mixing, pradk, bz2Deck])
-        
+            modeldb.insertModelData(conn, modelName, [modelID, teff, logg, feh, alpha, micro, deck])
+    
+    logging.info('Added all decks from model %s to db' % modelName)
+    logging.info('Updating the atmosphy_conf table')
+    conn.execute('update ATMOSPHY_CONF set rows=?,'
+                 'cols=?, LH=?, INSTALLED=? where ID=?',
+                 (deck.shape[0], deck.shape[1], mixing, 1, modelID))
     conn.commit()
     conn.close()
     
@@ -232,8 +231,8 @@ def installedModels():
     Reads from the database and returns the models on disk
     
     """
-    conn = modeldb.getModelDBConnection()
-    modelData = conn.execute("SELECT name FROM sqlite_master WHERE type='table'")
+    conn = modeldb.getModelDBConn()
+    modelData = conn.execute("SELECT model_name FROM atmosphy_conf WHERE installed=1")
     modelNames=([str(item[0]) for item in modelData])
 
     #modelNames.remove('models')
@@ -318,7 +317,7 @@ def formatMOOG(Teff, logg, FeH, deck):
 
 
       
-def download(models='*', clobber=False, verbose=True, database='~/.atmosphy/atmosphy.db3'):
+def download(modelName, clobber=False, verbose=True, database='~/.atmosphy/atmosphy.db3'):
 
     """
     
@@ -361,101 +360,84 @@ def download(models='*', clobber=False, verbose=True, database='~/.atmosphy/atmo
     """
 
     
-    atmosphy_path = '~/.atmosphy/'
-    
-    models_path = atmosphy_path + 'models/'
+    atmosphy_path = os.path.expanduser('~/.atmosphy/')
+    models_path = os.path.join(atmosphy_path, 'models')
 
-    if not os.path.exists(database): raise ValueError, 'no database file found in %s' % dbPath
-    if not os.path.exists(configFilename): raise ValueError, 'no configuration file found in %s' % configFilename
+    conn = modeldb.getModelDBConn()
     
-    parser.read(configFilename)
     
-    # Get all the available model names from our configuration file
-    availableModels = parser.sections() #here
-                  
-    if (type(modelNames) == type(str())): modelNames = [modelNames]
     
-    # Find all the models that match our wildmask given
+    modelID = conn.execute('select ID from ATMOSPHY_CONF '
+                           'where MODEL_NAME = ?',
+                           (modelName,)).fetchall()
     
-    modelMatches = []
-    for modelName in modelNames:
-        modelMatches = modelMatches + fnmatch.filter(availableModels, modelName.lower())
     
-    print availableModels
-    if (1 > len(modelMatches)): raise ValueError, 'no models found.'
-    
-    # Get the regular expression patterns for each model name
-    
-    modelStacks = {}
-    
-    for modelMatch in modelMatches:
-        modelStacks[modelMatch] = parser.get(modelMatch, 'files').strip('"\'').split()
-
-    
-    # Get all the model files we need
-    
-    for modelName, modelFiles in modelStacks.iteritems():
-    
+    #checking if this model does exist and is not installed
+    if len(modelID) == 1:
+        modelID = modelID[0][0]
+        installed = conn.execute('select INSTALLED from ATMOSPHY_CONF '
+                                 'where ID = ?', (modelID,)).fetchone()[0]
+        if installed == 1:
+            raise ValueError('Model %s is installed.' % modelName)
+    elif len(modelID) == 0:
+        availableModels = conn.execute('select MODEL_NAME from ATMOSPHY_CONF '
+                                       'where INSTALLED = 0').fetchall()
+        print "Available models:\n %s" % ','.join(availableModels)
+        raise ValueError('Model %s does not exist' % modelName)
         
-        if verbose:
-            print 'Entering %s' % modelName
-        
-        # Generate the models directory if it doesn't exist
-        if not os.path.exists(modelsPath):
-            if verbose:
-                print 'Creating %s' % modelsPath
-                
-            os.makedirs(modelsPath)
-        
-        # Generate this specific model directory if it doesn't exist
-        if not os.path.exists(os.path.join(modelsPath, modelName)):
-            if verbose:
-                print 'Creating %s' % modelsPath + modelName
-            
-            os.makedirs(os.path.join(modelsPath,modelName))
-
-        
-        for modelFile in modelFiles:
     
-            # Check to see if this file already exists
-            fullPath = os.path.join(modelsPath, modelName, modelFile.split('/')[-1])
-            fileExists = os.path.exists(fullPath)
-            
-                
-            #if (md5_file(fullPath) != '') or not fileExists:
-            if not fileExists:
-                
-                if verbose and not fileExists: print 'Writing %s from %s' % (fullPath, modelFile)
-                if fileExists:
-                    if verbose: print 'Over-writing %s with %s' % (fullPath, modelFile)
-                    os.remove(fullPath)
-                    
-                stream = urllib2.urlopen(modelFile)
+    
+    
+    # Generate the models directory if it doesn't exist
+    if not os.path.exists(models_path):
+        logging.info('Creating %s' % modelsPath)
+        os.makedirs(modelsPath)
+    
+    # Generate this specific model directory if it doesn't exist
+    modelDir = os.path.join(models_path, modelName)
+    if not os.path.exists(os.path.join(models_path, modelName)):
+        logging.info('Creating %s' % os.path.join(models_path, modelName))
+        os.makedirs(os.path.join(modelsPath,modelName))
+    
+    
+    #Getting models and checking MD5s
+    
+    curs = conn.cursor()
+    
+    
+    
+    for url, md5_hash in curs.execute('select URL, MD5_HASH from ATMOSPHY_URLS where MODEL_ID = ?', (modelID,)):
+        filename = url.split('/')[-1]
+        if os.path.exists(os.path.join(modelDir, filename)):
+            print "Checking MD5 for %s" % os.path.join(modelDir, filename),
+            curMD5 = md5_file(os.path.join(modelDir, filename))
+            if md5_hash == curMD5:
+                print "....Verified"
+            else:
+                print "....Failed. Redownloading."
+                stream = urllib2.urlopen(url)
                 data = stream.read()
                 stream.close()
                 
-                newFile = open(fullPath, 'w')
+                newFile = open(os.path.join(modelDir, filename), 'w')
                 newFile.write(data)
                 newFile.close()
                 
-                
-                # Check the MD5 checksum of this file
-                MD5_checksum = md5_file(fullPath)
-                if (MD5_checksum != ''):
-                    logging.warning('[MD5 checksum for file "%s" did not match expected. Expected "%s", calculated "%s"' % (fullPath, ' ', MD5_checksum, ))
+        else:
+            print "Downloading from %s" % url
+            stream = urllib2.urlopen(url)
+            data = stream.read()
+            stream.close()
             
-        
-        
-        # Import the model into the database
-        srcPath = os.path.join(modelsPath, modelName)
-        dstPath = os.path.join(srcPath, 'split')
-        
-        if verbose:
-            print 'Importing model...'
-        importModel(modelName, srcPath, dstPath, overwrite=clobberDB, verbose=verbose)
+            newFile = open(os.path.join(modelDir, filename), 'w')
+            newFile.write(data)
+            newFile.close()
 
-        logging.info('Successfully imported %s model' % (modelName,))
-        if verbose: print 'Done!'
+    
+    logging.info('Importing models ...')
+    importModel(modelName, modelID)
+    logging.info('Successfully imported %s model' % (modelName,))
+    logging.info('Done!.')
     
 
     

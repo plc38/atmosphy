@@ -5,25 +5,27 @@ import os
 import sqlite3
 import cPickle as pickle
 import zlib
-
 import fileio
 import initialize
 import modeldb
+
+import pdb
 
 #TODO:
 # 1 check what happens with different deck sizes in caskur 72,9 and 71,9
 # 2 what's wrong with different dimensions coming out of the grid
 
 
-def getInterpModels(interpolatedDimensions, SQL, boundaryValues):
+def getInterpModels(interpolatedDimensions, SQL, boundaryValues, deckShape):
 
-    conn = modeldb.getModelDBConnection()
+    conn = modeldb.getModelDBConn()
     
     dimensions = ', '.join(interpolatedDimensions)
     
     if len(dimensions) > 0:
         positions = conn.execute('select %s %s' % (dimensions, SQL,),
                                     boundaryValues).fetchall()
+        
         # There is a bug that if the length of each position is one, then instead
         # of returning a tuple it should return a float
         
@@ -36,9 +38,10 @@ def getInterpModels(interpolatedDimensions, SQL, boundaryValues):
                                     
     modelGrid = conn.execute('select deck %s' % (SQL,),
                                 boundaryValues).fetchall()
-    conn.close()
     
-    return positions, np.array(zip(*modelGrid)[0])
+    conn.close()
+    print
+    return positions, np.array([item.reshape(deckShape) for item in zip(*modelGrid)[0]])
 
 
 def interpModelGrid(modelName, Teff, logg, FeH, k=2.0, alpha=0.0, level=1, method='linear'):
@@ -89,12 +92,14 @@ def interpModelGrid(modelName, Teff, logg, FeH, k=2.0, alpha=0.0, level=1, metho
                     'alpha': alpha
                  }
                 
-    
+    conn = modeldb.getModelDBConn()
     # Find the nearest neighbours in N dimensions, and get the SQL
     interpolatedDimensions, SQL, boundaryValues = getNearestNeighbours(modelName, Teff, logg, FeH, k, alpha, level=level)
 
     # Populate the model grid
-    modelGridCoord, modelGrid = getInterpModels(interpolatedDimensions, SQL, boundaryValues)
+    
+    deckShape = conn.execute('select ROWS, COLS from ATMOSPHY_CONF where MODEL_NAME=?', (modelName,)).fetchone()
+    modelGridCoord, modelGrid = getInterpModels(interpolatedDimensions, SQL, boundaryValues, deckShape)
     
     # If there are no grid points to interpolate between then no interpolation is necessary
     if len(modelGridCoord) == 0: return modelGrid[0]
@@ -105,8 +110,16 @@ def interpModelGrid(modelName, Teff, logg, FeH, k=2.0, alpha=0.0, level=1, metho
         gridPoint.append(gridSpace[interpolatedDimension])
         
     
-    # Return the interpolated grid deck
     
+    
+    #if len(interpolatedDimension) = 1 we have a oned interpolate
+    #griddate gives back nan values if that is not sorted. sent message to scipy mailing list
+    
+    if len(interpolatedDimensions) == 1:
+        modelGrid= [modelGrid[i] for i in np.argsort(modelGridCoord)]
+        modelGridCoord = np.sort(modelGridCoord)
+        
+    # Return the interpolated grid deck
     #Fix for griddata scipy 0.9RC1 inspect this at a later time!!!
     gridPoint = np.array(gridPoint).reshape(1, len(gridPoint))
     
@@ -151,9 +164,11 @@ def getNearestNeighbours(model, Teff, logg, FeH, k=2.0, alpha=0.0, level=1):
 
     
 
-    connection = modeldb.getModelDBConnection()
-
-    result = connection.execute('select Teff, logg, FeH, k, alpha from `%s`' % model)
+    connection = modeldb.getModelDBConn()
+    modelID = connection.execute('select id from atmosphy_conf '
+                                'where model_name = ?', (model,)).fetchone()[0]
+    result = connection.execute('select Teff, logg, FeH, k, alpha from models'
+                                ' where model_id = ?', (modelID,))
     
     # todo - consider rewriting following section into a loop?
     Teff_grid, logg_grid, FeH_grid, k_grid, alpha_grid = zip(*result.fetchall())
@@ -184,7 +199,7 @@ def getNearestNeighbours(model, Teff, logg, FeH, k=2.0, alpha=0.0, level=1):
     
     # Build the dimensions we want back from the SQL table
     
-    SQL = 'from `%s` where' % model
+    SQL = 'from models where MODEL_ID=%d and ' % modelID
     
     boundaryValues = []
     interpolatedDimensions = []
@@ -217,7 +232,7 @@ def getNearestNeighbours(model, Teff, logg, FeH, k=2.0, alpha=0.0, level=1):
             SQL += ' %s = ? and' % dimension
     
     if SQL[-3:] == 'and': SQL = SQL[:-3]
-    
+
     # Return the SQL
     return (interpolatedDimensions, SQL, tuple(boundaryValues))
        

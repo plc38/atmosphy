@@ -5,7 +5,10 @@ create table ATMOSPHY_CONF(
     DESCRIPTION text,
     BIBTEX text,
     BIBITEM text,
-    INSTALLED integer);
+    ROWS integer default 72,
+    COLS integer default 9,
+    LH float,
+    INSTALLED integer default 0);
     
 create table ATMOSPHY_URLS(
     ID integer primary key,
@@ -14,7 +17,17 @@ create table ATMOSPHY_URLS(
     MD5_HASH integer,
     foreign key(MODEL_ID) references ATMOSPHY_CONF(ID));
 
-
+create table MODELS(
+    ID integer primary key,
+    MODEL_ID integer,
+    TEFF float,
+    LOGG float,
+    FEH float,
+    ALPHA float,
+    K float,
+    DECK np_memmap,
+    foreign key(MODEL_ID) references ATMOSPHY_CONF(ID)
+);
 
 --
 --castelli-kurucz
@@ -26,6 +39,8 @@ insert into ATMOSPHY_CONF(MODEL_NAME,
                           DESCRIPTION,
                           BIBTEX,
                           BIBITEM,
+                          ROWS,
+                          COLS,
                           INSTALLED)
             VALUES('castelli-kurucz',
                    'caskur',
@@ -44,7 +59,7 @@ insert into ATMOSPHY_CONF(MODEL_NAME,
 
 ', '\bibitem[Castelli \& Kurucz(2004)]{2004astro.ph..5087C} Castelli, F., \& Kurucz, R.~L.\ 2004, arXiv:astro-ph/0405087 
 
-',0);
+', 72, 10, 0);
                     
 create temporary table vars (name text, value something);
 

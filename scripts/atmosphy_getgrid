@@ -16,13 +16,13 @@ parser=argparse.ArgumentParser(
 parser.add_argument("modelName",
                     help="ModelName to download and install",
                     type=str)
-parser.add_argument("--clobberdb",
-                    help="Overwrite Model even if already in database",
-                    action='store_true')
+#parser.add_argument("--clobberdb",
+#                    help="Overwrite Model even if already in database",
+#                    action='store_true')
 
-def getModel(modelName, clobberDB=False):
+def getModel(modelName):
     try:
-        fileio.download(modelName, verbose=True, clobberDB=clobberDB)
+        fileio.download(modelName, verbose=True)
     except fileio.casKurImportException:
         print "\n\n%s does not exist\n" % modelName
         printModels()
@@ -37,6 +37,6 @@ def printModels():
 
 if __name__ == '__main__':
     args = parser.parse_args()
-    getModel(args.modelName, clobberDB=args.clobberdb)
+    getModel(args.modelName)
 
 
