@@ -5,6 +5,7 @@ import sys
 import pdb
 import re
 import itertools
+import numpy as np
 
 import atmosphy.initialize as initialize
 import atmosphy.interpolate as ainterp
@@ -14,20 +15,26 @@ usage="Usage: %prog teff logg feh [options]"
 
 parser=argparse.ArgumentParser(description='Interpolate stellar atmospheres for usage in spectrum synthesis codes like MOOG.')
 #parser = OptionParser(usage=usage)
-parser.add_argument("teff",
+parser.add_argument("-teff",
 					help="Effective Temperature\
-					 of the required model",
-					 type=str)
+					 of the required model. A range can be specified by giving 3 numbers (start,end, step).",
+                                        nargs='+',
+                                        default=5780,
+					 type=float)
 
-parser.add_argument("logg",
+parser.add_argument("-logg",
 					help="Surface Gravity (log(g))\
-					 of the required model",
-					 type=str)
+					 of the required model. A range can be specified by giving 3 numbers (start,end, step).",
+                                        nargs='+',
+                                        default=4.4,
+					 type=float)
 
-parser.add_argument("feh",
+parser.add_argument("-feh",
 					help="Metallicity [Fe/H]\
-					 of the required model",
-					 type=str)
+					 of the required model. A range can be specified by giving 3 numbers (start,end, step).",
+                                        nargs='+',
+                                        default=0.0,
+					 type=float)
 					 
 parser.add_argument("-k","--microturb",
 					help="Micro turbulence \
@@ -63,23 +70,22 @@ if __name__ == '__main__':
         print "Modelgrid %s not available. Please install the following way:\n" % args.modelgrid
         print "atmosphy_getgrid %s\n\n" % args.modelgrid
         sys.exit(-1)
-    matchRange = re.compile('(\d+\.?\d*e?[+-]?\d*)-(\d+\.?\d*e?[+-]?\d*);(\d+\.?\d*e?[+-]?\d*)')
-    matchSingle = re.compile('[+-]?\d+\.?\d*e?[+-]?\d*')
+    #matchRange = re.compile('(\d+\.?\d*e?[+-]?\d*)to(\d+\.?\d*e?[+-]?\d*),(\d+\.?\d*e?[+-]?\d*)')
+    #matchSingle = re.compile('[+-]?\d+\.?\d*e?E?[+-]?\d*')
     
     params = []
+    print args
     for paramName in ['teff', 'logg', 'feh']:
         param = args.__dict__[paramName]
-        paramRange = matchRange.search(param)
-        paramSingle = matchSingle.search(param)
-        if paramRange != None:
-            params.append(xrange(*map(float, paramRange.groups())))
-        elif paramSingle != None:
-            params.append([float(paramSingle.group())])
+        if not np.iterable(param):
+            params.append([param])
+        elif len(param) == 1:
+            params.append([param[0]])
+        elif len(param) == 3:
+            params.append(np.arange(*param))
         else:
-            raise ValueError('Not a valid entry for %s: %s.\n'
-                                'Valid entries are a number or '
-                                'a range in the following format:\n'
-                                'number-number;stepsize' % (paramName, param))
+            raise ValueError("Please give 1 number or 3 numbers for a range.")
+        
     
     #running the grid
     paramGrid = itertools.product(*params)
