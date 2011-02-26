@@ -200,32 +200,6 @@ class casKurModel(object):
         self.data = np.array(data)
         
 
-
-  
-  
-def availableModels():
-    
-    """
-    
-    Reads from the astrophy config file and returns a dictionary of available model names
-    and their relevant descriptions.
-    
-    """
-    
-    configFilename = initialize.atmosStoragePath('conf.d')
-    
-    parser = ConfigParser()
-    parser.read(configFilename)
-    
-    modelNames = parser.sections() #here
-    
-    availableModels = {}
-    
-    for modelName in modelNames:
-        availableModels[modelName] = parser.get(modelName, 'description')
-        
-    return availableModels
-
 def installedModels():
     """
     Reads from the database and returns the models on disk
