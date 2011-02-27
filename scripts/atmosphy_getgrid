@@ -2,11 +2,11 @@
 
 import argparse
 
-import atmosphy.initialize as initialize
+#import atmosphy.initialize as initialize
 import atmosphy.fileio as fileio
 import atmosphy.modeldb as modeldb
 
-availModels = '\n'.join(["name: %s | description: %s" % item for item in fileio.availableModels().items()])
+#availModels = '\n'.join(["name: %s | description: %s" % item for item in fileio.availableModels().items()])
 
 usage="Usage: %prog modelGridName catalogue [options]"
 
@@ -29,10 +29,10 @@ def getModel(modelName):
         
         
                     
-def printModels():
-     print "These Models are currently available:\n"
-     print "----------------\n"
-     print availModels
+#def printModels():
+#     print "These Models are currently available:\n"
+#     print "----------------\n"
+#     print availModels
      
 
 if __name__ == '__main__':

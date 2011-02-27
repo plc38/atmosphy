@@ -1,5 +1,5 @@
 import sqlite3
-import initialize
+#import initialize
 import bz2
 import cPickle as pickle
 import os

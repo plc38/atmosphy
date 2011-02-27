@@ -7,7 +7,7 @@ import re
 import itertools
 import numpy as np
 
-import atmosphy.initialize as initialize
+#import atmosphy.initialize as initialize
 import atmosphy.interpolate as ainterp
 import atmosphy.fileio as fileio
 

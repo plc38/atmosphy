@@ -1,6 +1,6 @@
 import os
 from shutil import copyfile
-import initialize
+#import initialize
 import logging
 
 atmosphyUserPath = os.path.expanduser('~/.atmosphy')

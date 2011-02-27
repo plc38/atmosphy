@@ -11,7 +11,7 @@ import cPickle as pickle
 import hashlib
 
 
-import initialize
+#import initialize
 import modeldb
 import logging, logging.config
 
@@ -199,6 +199,7 @@ class casKurModel(object):
         self.data = np.array(data)
         
 
+
 def installedModels():
     """
     
@@ -364,14 +365,14 @@ def download(modelName, clobber=False, verbose=True, database='~/.atmosphy/atmos
     
     # Generate the models directory if it doesn't exist
     if not os.path.exists(models_path):
-        logging.info('Creating %s' % modelsPath)
-        os.makedirs(modelsPath)
+        logging.info('Creating %s' % models_path)
+        os.makedirs(models_path)
     
     # Generate this specific model directory if it doesn't exist
     modelDir = os.path.join(models_path, modelName)
     if not os.path.exists(os.path.join(models_path, modelName)):
         logging.info('Creating %s' % os.path.join(models_path, modelName))
-        os.makedirs(os.path.join(modelsPath,modelName))
+        os.makedirs(os.path.join(models_path,modelName))
     
     
     #Getting models and checking MD5s

@@ -6,7 +6,7 @@ import sqlite3
 import cPickle as pickle
 import zlib
 import fileio
-import initialize
+#import initialize
 import modeldb
 
 import pdb
