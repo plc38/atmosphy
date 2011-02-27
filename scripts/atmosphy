@@ -74,7 +74,7 @@ if __name__ == '__main__':
     #matchSingle = re.compile('[+-]?\d+\.?\d*e?E?[+-]?\d*')
     
     params = []
-    print args
+    
     for paramName in ['teff', 'logg', 'feh']:
         param = args.__dict__[paramName]
         if not np.iterable(param):
