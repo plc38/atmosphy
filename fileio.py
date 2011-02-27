@@ -22,7 +22,6 @@ import logging, logging.config
 
 
 import fnmatch
-from ConfigParser import ConfigParser
 
 class casKurImportException(Exception):
     pass
@@ -202,12 +201,13 @@ class casKurModel(object):
 
 def installedModels():
     """
+    
     Reads from the database and returns the models on disk
     
     """
     conn = modeldb.getModelDBConn()
     modelData = conn.execute("SELECT model_name FROM atmosphy_conf WHERE installed=1")
-    modelNames=([str(item[0]) for item in modelData])
+    modelNames = ([str(item[0]) for item in modelData])
 
     #modelNames.remove('models')
     

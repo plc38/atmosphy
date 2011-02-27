@@ -19,7 +19,7 @@ setup(name='atmosphy',
       packages = ['atmosphy'],
       package_dir = {'atmosphy':'./'},
       cmdclass = {'build_py':build_py},
-      data_files = [('~/.atmosphy', ['conf.d'])],
+      data_files = [('conf.d', ['conf.d/atmosphy.schema', 'conf.d/config.ini'])],
       #install_requires = ['argparse>=1.1', 'scipy>0.9.0.dev6903']
       install_requires = ['argparse>=1.1'],
       test_suite = 'nose.collector'

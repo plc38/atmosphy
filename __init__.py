@@ -10,13 +10,11 @@ moduleDir = os.path.dirname(os.path.realpath(__file__))
 
 if not os.path.exists(atmosphyUserPath):
     os.makedirs(atmosphyUserPath)
-
-# Copy the config file into the user home directory
     
 #Creating a atmosphy.db3
 if not os.path.exists(os.path.join(atmosphyUserPath, 'atmosphy.db3')):
     import sqlite3
     conn = sqlite3.connect(os.path.join(atmosphyUserPath, 'atmosphy.db3'))
-    conn.executescript(file(os.path.join(moduleDir, 'conf.d', 'atmosphy.schema')).read())
+    conn.executescript(file(os.path.join(moduleDir, '../', 'conf.d', 'atmosphy.schema')).read())
     conn.commit()
     conn.close()
