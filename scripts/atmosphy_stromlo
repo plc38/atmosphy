@@ -1,0 +1,19 @@
+#!/usr/bin/env python
+import os
+import sys
+userPath = os.path.expanduser('~/.atmosphy/')
+
+if os.path.exists(userPath):
+    print "DB directory already exists (%s)" % userPath
+    overwrite = raw_input("WARNING: This action will overwrite your database. Continue [y/N]")
+    if not overwrite.lower().startswith('y'):
+        print "Operation aborted"
+        sys.exit(0)
+        
+        
+print "Copying database :"
+syscmd = 'cp ~acasey/atmosphy/dist/atmosphy.db3 %s' % userPath
+print syscmd
+os.system(syscmd)
+
+print 'Done.'
