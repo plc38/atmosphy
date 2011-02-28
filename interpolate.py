@@ -122,7 +122,7 @@ def interpModelGrid(modelName, Teff, logg, FeH, k=2.0, alpha=0.0, level=1, metho
     # Return the interpolated grid deck
     #Fix for griddata scipy 0.9RC1 inspect this at a later time!!!
     gridPoint = np.array(gridPoint).reshape(1, len(gridPoint))
-    
+
     return interpolate.griddata(modelGridCoord, modelGrid, gridPoint, method=method)
     
     
