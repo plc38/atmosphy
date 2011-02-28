@@ -10,7 +10,7 @@ except ImportError: # Python 2.x
 
 
 setup(name='atmosphy',
-      version='0.1',
+      version='1.0b1',
       description='Stellar atmosphere models in Python',
       author='Wolfgang Kerzendorf and Andy Casey',
       author_email='wkerzendorf@mso.anu.edu.au, \
@@ -21,8 +21,7 @@ setup(name='atmosphy',
       cmdclass = {'build_py':build_py},
       data_files = [('conf.d', ['conf.d/atmosphy.schema', 'conf.d/config.ini'])],
       scripts=['scripts/atmosphy', 'scripts/atmosphy_getgrid'],
-      #install_requires = ['argparse>=1.1', 'scipy>0.9.0.dev6903']
-      install_requires = ['argparse>=1.1'],
+      install_requires = ['argparse>=1.1', 'scipy>=0.9.0rc5']
       test_suite = 'nose.collector'
      )
 
