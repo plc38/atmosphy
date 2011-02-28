@@ -21,7 +21,7 @@ setup(name='atmosphy',
       cmdclass = {'build_py':build_py},
       data_files = [('conf.d', ['conf.d/atmosphy.schema', 'conf.d/config.ini'])],
       scripts=['scripts/atmosphy', 'scripts/atmosphy_getgrid'],
-      install_requires = ['argparse>=1.1']#, 'scipy>=0.9.0rc5'],
+      install_requires = ['argparse>=1.1'],#, 'scipy>=0.9.0rc5'],
       test_suite = 'nose.collector'
      )
 
