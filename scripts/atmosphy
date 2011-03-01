@@ -96,7 +96,13 @@ if __name__ == '__main__':
         else:
             fname = args.fname
         print 'Creating file %s' %fname
-        deck = ainterp.interpModelGrid(args.modelgrid, param[0], param[1], param[2], args.k, args.alpha)
+        try:
+            deck = ainterp.interpModelGrid(args.modelgrid, param[0], param[1], param[2], args.k, args.alpha)
+        except ainterp.OutOfBoundsError:
+            warningMsg = ("Warning: Could not create atmosphere with Teff %.2f logg %.2f [Fe/H] %.2f micro %.2f alpha %.2f. \n"
+                    "The requested point lies outside the grid of model atmospheres")
+            print warningMsg % (param[0], param[1], param[2], args.k, args.alpha)
+                
         formattedDeck = fileio.formatMOOG(param[0], param[1], param[2], deck)
 
         file(fname, 'w').write(formattedDeck)

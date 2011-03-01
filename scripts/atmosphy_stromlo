@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+
+#A good script for a system with many users, so they don't all have to 
 import os
 import sys
 userPath = os.path.expanduser('~/.atmosphy/')
@@ -9,7 +11,8 @@ if os.path.exists(userPath):
     if not overwrite.lower().startswith('y'):
         print "Operation aborted"
         sys.exit(0)
-        
+else:
+    os.makedirs(userPath)
         
 print "Copying database :"
 syscmd = 'cp ~acasey/atmosphy/dist/atmosphy.db3 %s' % userPath
