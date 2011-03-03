@@ -3,3 +3,7 @@
 atmosphy.komodoproject
 tmp
 *.pyc
+atmosphy.egg-info
+build
+dist
+

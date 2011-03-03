@@ -10,7 +10,7 @@ except ImportError: # Python 2.x
 
 
 setup(name='atmosphy',
-      version='1.0b1',
+      version='1.0b2',
       description='Stellar atmosphere models in Python',
       author='Wolfgang Kerzendorf and Andy Casey',
       author_email='wkerzendorf@mso.anu.edu.au, \

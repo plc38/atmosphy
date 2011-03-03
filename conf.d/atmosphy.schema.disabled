@@ -1,0 +1,512 @@
+--
+--kurucz-nover
+--
+
+
+insert into ATMOSPHY_CONF(MODEL_NAME, 
+                          MODEL_SHORT,
+                          DESCRIPTION,
+                          BIBTEX,
+                          BIBITEM,
+                          INSTALLED)
+                          
+                          VALUES('kurucz-nover',
+                                 'knover',
+                                 'A grid of LTE model atmospheres is presented for effective temperatures ranging from 5500 to 50,000 K, gravities from the main sequence down to the radiation-pressure limit, and abundances solar, 1/10 solar, and 1/100 solar.',
+                          '@ARTICLE{1979ApJS...40....1K,
+   author = {{Kurucz}, R.~L.},
+    title = "{Model atmospheres for G, F, A, B, and O stars}",
+  journal = {\apjs},
+ keywords = {ATMOSPHERIC MODELS, EARLY STARS, F STARS, G STARS, LINE SPECTRA, STELLAR ATMOSPHERES, STELLAR MODELS, A STARS, ABUNDANCE, B STARS, BALMER SERIES, DISTRIBUTION FUNCTIONS, ERROR ANALYSIS, O STARS, OPACITY, RADIATION PRESSURE, SOLAR ATMOSPHERE, SOLAR SIMULATION, SPECTROPHOTOMETRY, STATISTICAL ANALYSIS, TABLES (DATA), TEMPERATURE EFFECTS},
+     year = 1979,
+    month = may,
+   volume = 40,
+    pages = {1-340},
+      doi = {10.1086/190589},
+   adsurl = {http://adsabs.harvard.edu/abs/1979ApJS...40....1K},
+  adsnote = {Provided by the SAO/NASA Astrophysics Data System}
+}','\bibitem[Kurucz(1979)]{1979ApJS...40....1K} Kurucz, R.~L.\ 1979, \apjs, 40,1',0);
+
+UPDATE vars SET value=(select last_insert_rowid()) WHERE name='lastcol';
+
+insert into ATMOSPHY_URLS(MODEL_ID,
+URL,
+MD5_HASH)
+values((select value from vars where name='lastcol'),
+'HTTP://KURUCZ.harvard.edu/grids/gridm05NOVER/am05k2nover.dat',
+'a4cee536b46021f6d088217fcb6db3a4');
+
+
+insert into ATMOSPHY_URLS(MODEL_ID,
+URL,
+MD5_HASH)
+values((select value from vars where name='lastcol'),
+'HTTP://KURUCZ.harvard.edu/grids/gridm10NOVER/am10k2nover.dat',
+'fc6e5583cead3dff8cdff3d61215c1d2');
+
+
+insert into ATMOSPHY_URLS(MODEL_ID,
+URL,
+MD5_HASH)
+values((select value from vars where name='lastcol'),
+'HTTP://KURUCZ.harvard.edu/grids/gridm15NOVER/am15k2nover.dat',
+'ef93acb9796c81c50fd1b4a1ec59fe8f');
+
+
+insert into ATMOSPHY_URLS(MODEL_ID,
+URL,
+MD5_HASH)
+values((select value from vars where name='lastcol'),
+'HTTP://KURUCZ.harvard.edu/grids/gridm20NOVER/am20k2nover.dat',
+'a034463dce55720e748ef542669a08bb');
+
+
+insert into ATMOSPHY_URLS(MODEL_ID,
+URL,
+MD5_HASH)
+values((select value from vars where name='lastcol'),
+'HTTP://KURUCZ.harvard.edu/grids/gridm25NOVER/am25k2nover.dat',
+'ba1e76e95a0ca86e036588e727deb80f');
+
+
+insert into ATMOSPHY_URLS(MODEL_ID,
+URL,
+MD5_HASH)
+values((select value from vars where name='lastcol'),
+'HTTP://KURUCZ.harvard.edu/grids/gridP00NOVER/ap00k0nover.dat',
+'536c95465b3ca01b09eb9b9b7ad8cebc');
+
+
+insert into ATMOSPHY_URLS(MODEL_ID,
+URL,
+MD5_HASH)
+values((select value from vars where name='lastcol'),
+'HTTP://KURUCZ.harvard.edu/grids/gridP00NOVER/ap00k2nover.dat',
+'94e6976ef3c6ebb52f5414c3909b8e74');
+
+
+insert into ATMOSPHY_URLS(MODEL_ID,
+URL,
+MD5_HASH)
+values((select value from vars where name='lastcol'),
+'HTTP://KURUCZ.harvard.edu/grids/gridP00NOVER/ap00k4nover.dat',
+'975a89b5e08f1deac7c20b36b753117a');
+
+
+insert into ATMOSPHY_URLS(MODEL_ID,
+URL,
+MD5_HASH)
+values((select value from vars where name='lastcol'),
+'HTTP://KURUCZ.harvard.edu/grids/gridP05NOVER/ap05k2nover.dat',
+'b5300aa71db48a416bb222d7de7bad46');
+
+
+
+
+--
+--kurucz-aodfnew
+--
+
+
+insert into ATMOSPHY_CONF(MODEL_NAME, 
+                          MODEL_SHORT,
+                          DESCRIPTION,
+                          BIBTEX,
+                          BIBITEM,
+                          INSTALLED)
+                          
+                          VALUES('kurucz-aodfnew',
+                                 'kaodfnew',
+                                 'A grid of LTE model atmospheres is presented for effective temperatures ranging from 5500 to 50,000 K, gravities from the main sequence down to the radiation-pressure limit, and abundances solar, 1/10 solar, and 1/100 solar.',
+                          '@ARTICLE{1979ApJS...40....1K,
+   author = {{Kurucz}, R.~L.},
+    title = "{Model atmospheres for G, F, A, B, and O stars}",
+  journal = {\apjs},
+ keywords = {ATMOSPHERIC MODELS, EARLY STARS, F STARS, G STARS, LINE SPECTRA, STELLAR ATMOSPHERES, STELLAR MODELS, A STARS, ABUNDANCE, B STARS, BALMER SERIES, DISTRIBUTION FUNCTIONS, ERROR ANALYSIS, O STARS, OPACITY, RADIATION PRESSURE, SOLAR ATMOSPHERE, SOLAR SIMULATION, SPECTROPHOTOMETRY, STATISTICAL ANALYSIS, TABLES (DATA), TEMPERATURE EFFECTS},
+     year = 1979,
+    month = may,
+   volume = 40,
+    pages = {1-340},
+      doi = {10.1086/190589},
+   adsurl = {http://adsabs.harvard.edu/abs/1979ApJS...40....1K},
+  adsnote = {Provided by the SAO/NASA Astrophysics Data System}
+}','\bibitem[Kurucz(1979)]{1979ApJS...40....1K} Kurucz, R.~L.\ 1979, \apjs, 40,1',0);
+
+UPDATE vars SET value=(select last_insert_rowid()) WHERE name='lastcol';
+
+insert into ATMOSPHY_URLS(MODEL_ID,
+URL,
+MD5_HASH)
+values((select value from vars where name='lastcol'),
+'HTTP://KURUCZ.harvard.edu/grids/gridm05AODFNEW/am05ak2odfnew.dat',
+'f7b6a3934c4f7761bb84e5b15c3e02b8');
+
+
+insert into ATMOSPHY_URLS(MODEL_ID,
+URL,
+MD5_HASH)
+values((select value from vars where name='lastcol'),
+'HTTP://KURUCZ.harvard.edu/grids/gridm10AODFNEW/am10ak2odfnew.dat',
+'1fc5945b12962a9da467c8e0d086a4dd');
+
+
+insert into ATMOSPHY_URLS(MODEL_ID,
+URL,
+MD5_HASH)
+values((select value from vars where name='lastcol'),
+'HTTP://KURUCZ.harvard.edu/grids/gridm15AODFNEW/am15ak2odfnew.dat',
+'e29228fa4fa99f0eb5fdb024bc01ac4c');
+
+
+insert into ATMOSPHY_URLS(MODEL_ID,
+URL,
+MD5_HASH)
+values((select value from vars where name='lastcol'),
+'HTTP://KURUCZ.harvard.edu/grids/gridm20AODFNEW/am20ak2odfnew.dat',
+'0a94c641432f3a56c0675a377eb27631');
+
+
+insert into ATMOSPHY_URLS(MODEL_ID,
+URL,
+MD5_HASH)
+values((select value from vars where name='lastcol'),
+'HTTP://KURUCZ.harvard.edu/grids/gridm25AODFNEW/am25ak2odfnew.dat',
+'0432acaf75e0f221c8dbed314c4b47d8');
+
+
+insert into ATMOSPHY_URLS(MODEL_ID,
+URL,
+MD5_HASH)
+values((select value from vars where name='lastcol'),
+'HTTP://KURUCZ.harvard.edu/grids/gridm40AODFNEW/am40ak2odfnew.dat',
+'034eee3b58c9ad449af00f7463877172');
+
+
+insert into ATMOSPHY_URLS(MODEL_ID,
+URL,
+MD5_HASH)
+values((select value from vars where name='lastcol'),
+'HTTP://KURUCZ.harvard.edu/grids/gridP05AODFNEW/ap05ak2odfnew.dat',
+'7593fe97f25835a08ead44c65d7ed6e8');
+
+
+
+
+--
+--kurucz
+--
+
+
+insert into ATMOSPHY_CONF(MODEL_NAME, 
+                          MODEL_SHORT,
+                          DESCRIPTION,
+                          BIBTEX,
+                          BIBITEM,
+                          INSTALLED)
+                          
+                          VALUES('kurucz',
+                                 'kur',
+                                 'A grid of LTE model atmospheres is presented for effective temperatures ranging from 5500 to 50,000 K, gravities from the main sequence down to the radiation-pressure limit, and abundances solar, 1/10 solar, and 1/100 solar.',
+                          '@ARTICLE{1979ApJS...40....1K,
+   author = {{Kurucz}, R.~L.},
+    title = "{Model atmospheres for G, F, A, B, and O stars}",
+  journal = {\apjs},
+ keywords = {ATMOSPHERIC MODELS, EARLY STARS, F STARS, G STARS, LINE SPECTRA, STELLAR ATMOSPHERES, STELLAR MODELS, A STARS, ABUNDANCE, B STARS, BALMER SERIES, DISTRIBUTION FUNCTIONS, ERROR ANALYSIS, O STARS, OPACITY, RADIATION PRESSURE, SOLAR ATMOSPHERE, SOLAR SIMULATION, SPECTROPHOTOMETRY, STATISTICAL ANALYSIS, TABLES (DATA), TEMPERATURE EFFECTS},
+     year = 1979,
+    month = may,
+   volume = 40,
+    pages = {1-340},
+      doi = {10.1086/190589},
+   adsurl = {http://adsabs.harvard.edu/abs/1979ApJS...40....1K},
+  adsnote = {Provided by the SAO/NASA Astrophysics Data System}
+}','\bibitem[Kurucz(1979)]{1979ApJS...40....1K} Kurucz, R.~L.\ 1979, \apjs, 40,1',0);
+
+UPDATE vars SET value=(select last_insert_rowid()) WHERE name='lastcol';
+
+insert into ATMOSPHY_URLS(MODEL_ID,
+URL,
+MD5_HASH)
+values((select value from vars where name='lastcol'),
+'HTTP://KURUCZ.harvard.edu/grids/gridm01/am01k2.dat',
+'7af7838636d7cb44f402e7a9e7ebef77');
+
+
+insert into ATMOSPHY_URLS(MODEL_ID,
+URL,
+MD5_HASH)
+values((select value from vars where name='lastcol'),
+'HTTP://KURUCZ.harvard.edu/grids/gridm02/am02k2.dat',
+'e03f4456d671aa7c7eeb84f4f4050d7d');
+
+
+insert into ATMOSPHY_URLS(MODEL_ID,
+URL,
+MD5_HASH)
+values((select value from vars where name='lastcol'),
+'HTTP://KURUCZ.harvard.edu/grids/gridm03/am03k2.dat',
+'bddb8655b65a8096db67763119314660');
+
+
+insert into ATMOSPHY_URLS(MODEL_ID,
+URL,
+MD5_HASH)
+values((select value from vars where name='lastcol'),
+'HTTP://KURUCZ.harvard.edu/grids/gridm05/am05k2.dat',
+'dd25701a33d2ced281796e4aa54d5e80');
+
+
+insert into ATMOSPHY_URLS(MODEL_ID,
+URL,
+MD5_HASH)
+values((select value from vars where name='lastcol'),
+'HTTP://KURUCZ.harvard.edu/grids/gridm10/am10k2.dat',
+'f1677844e9066bb3dd4b7c4e0e1abe2f');
+
+
+insert into ATMOSPHY_URLS(MODEL_ID,
+URL,
+MD5_HASH)
+values((select value from vars where name='lastcol'),
+'HTTP://KURUCZ.harvard.edu/grids/gridm15/am15k2.dat',
+'3069d7f29f81f5244077d4e622ade1db');
+
+
+insert into ATMOSPHY_URLS(MODEL_ID,
+URL,
+MD5_HASH)
+values((select value from vars where name='lastcol'),
+'HTTP://KURUCZ.harvard.edu/grids/gridm20/am20k2.dat',
+'f7ba7bff785507bdada5891e2788bbbf');
+
+
+insert into ATMOSPHY_URLS(MODEL_ID,
+URL,
+MD5_HASH)
+values((select value from vars where name='lastcol'),
+'HTTP://KURUCZ.harvard.edu/grids/gridm25/am25k2.dat',
+'b075c95046c25d948f1855299c729c91');
+
+
+insert into ATMOSPHY_URLS(MODEL_ID,
+URL,
+MD5_HASH)
+values((select value from vars where name='lastcol'),
+'HTTP://KURUCZ.harvard.edu/grids/gridm30/am30k2.dat',
+'58c32b5afa6a733a1f51f3a5eb090ffb');
+
+
+insert into ATMOSPHY_URLS(MODEL_ID,
+URL,
+MD5_HASH)
+values((select value from vars where name='lastcol'),
+'HTTP://KURUCZ.harvard.edu/grids/gridm35/am35k2.dat',
+'fb799a741f0498666a1fb1698b5247c3');
+
+
+insert into ATMOSPHY_URLS(MODEL_ID,
+URL,
+MD5_HASH)
+values((select value from vars where name='lastcol'),
+'HTTP://KURUCZ.harvard.edu/grids/gridm40/am40k2.dat',
+'945081f880c3e8f965ba251a4d5521ad');
+
+
+insert into ATMOSPHY_URLS(MODEL_ID,
+URL,
+MD5_HASH)
+values((select value from vars where name='lastcol'),
+'HTTP://KURUCZ.harvard.edu/grids/gridm45/am45k2.dat',
+'72f85735e8552ab5ca2f3a291909c26f');
+
+
+insert into ATMOSPHY_URLS(MODEL_ID,
+URL,
+MD5_HASH)
+values((select value from vars where name='lastcol'),
+'HTTP://KURUCZ.harvard.edu/grids/gridm50/am50k2.dat',
+'8b4f31d8ad2d0cd4fd9401780da36000');
+
+
+insert into ATMOSPHY_URLS(MODEL_ID,
+URL,
+MD5_HASH)
+values((select value from vars where name='lastcol'),
+'HTTP://KURUCZ.harvard.edu/grids/gridP00/ap00k0.dat',
+'e207d051a542adc00d91b2cd86b95548');
+
+
+insert into ATMOSPHY_URLS(MODEL_ID,
+URL,
+MD5_HASH)
+values((select value from vars where name='lastcol'),
+'HTTP://KURUCZ.harvard.edu/grids/gridP00/ap00k1.dat',
+'d407c9b867013796e583539a825c8ca6');
+
+
+insert into ATMOSPHY_URLS(MODEL_ID,
+URL,
+MD5_HASH)
+values((select value from vars where name='lastcol'),
+'HTTP://KURUCZ.harvard.edu/grids/gridP00/ap00k2.dat',
+'a94c251ddfc0d8baaccc50a6699c0085');
+
+
+insert into ATMOSPHY_URLS(MODEL_ID,
+URL,
+MD5_HASH)
+values((select value from vars where name='lastcol'),
+'HTTP://KURUCZ.harvard.edu/grids/gridP00/ap00k4.dat',
+'0321f3bfaadbbefdd7d6d67112590057');
+
+
+insert into ATMOSPHY_URLS(MODEL_ID,
+URL,
+MD5_HASH)
+values((select value from vars where name='lastcol'),
+'HTTP://KURUCZ.harvard.edu/grids/gridP00/ap00k8.dat',
+'5d464801c3247e6258cdcaa73f8e0c54');
+
+
+insert into ATMOSPHY_URLS(MODEL_ID,
+URL,
+MD5_HASH)
+values((select value from vars where name='lastcol'),
+'HTTP://KURUCZ.harvard.edu/grids/gridP01/ap01k2.dat',
+'4ffbaa136c2269833ddf88d67a68c0e6');
+
+
+insert into ATMOSPHY_URLS(MODEL_ID,
+URL,
+MD5_HASH)
+values((select value from vars where name='lastcol'),
+'HTTP://KURUCZ.harvard.edu/grids/gridP02/ap02k2.dat',
+'a8e5ed0daac6ab956ea1749e890b3438');
+
+
+insert into ATMOSPHY_URLS(MODEL_ID,
+URL,
+MD5_HASH)
+values((select value from vars where name='lastcol'),
+'HTTP://KURUCZ.harvard.edu/grids/gridP03/ap03k2.dat',
+'87b04feb9eb41cb7d5e4c896933c880b');
+
+
+insert into ATMOSPHY_URLS(MODEL_ID,
+URL,
+MD5_HASH)
+values((select value from vars where name='lastcol'),
+'HTTP://KURUCZ.harvard.edu/grids/gridP05/ap05k2.dat',
+'e7fc4647268971f8285b4a72223c321c');
+
+
+insert into ATMOSPHY_URLS(MODEL_ID,
+URL,
+MD5_HASH)
+values((select value from vars where name='lastcol'),
+'HTTP://KURUCZ.harvard.edu/grids/gridP10/ap10k2.dat',
+'571512802860e0abc8e8ac3d8f59d7b7');
+
+
+
+
+--
+--kurucz-odfnew
+--
+
+
+insert into ATMOSPHY_CONF(MODEL_NAME, 
+                          MODEL_SHORT,
+                          DESCRIPTION,
+                          BIBTEX,
+                          BIBITEM,
+                          INSTALLED)
+                          
+                          VALUES('kurucz-odfnew',
+                                 'kodfnew',
+                                 'A grid of LTE model atmospheres is presented for effective temperatures ranging from 5500 to 50,000 K, gravities from the main sequence down to the radiation-pressure limit, and abundances solar, 1/10 solar, and 1/100 solar.',
+                          '@ARTICLE{1979ApJS...40....1K,
+   author = {{Kurucz}, R.~L.},
+    title = "{Model atmospheres for G, F, A, B, and O stars}",
+  journal = {\apjs},
+ keywords = {ATMOSPHERIC MODELS, EARLY STARS, F STARS, G STARS, LINE SPECTRA, STELLAR ATMOSPHERES, STELLAR MODELS, A STARS, ABUNDANCE, B STARS, BALMER SERIES, DISTRIBUTION FUNCTIONS, ERROR ANALYSIS, O STARS, OPACITY, RADIATION PRESSURE, SOLAR ATMOSPHERE, SOLAR SIMULATION, SPECTROPHOTOMETRY, STATISTICAL ANALYSIS, TABLES (DATA), TEMPERATURE EFFECTS},
+     year = 1979,
+    month = may,
+   volume = 40,
+    pages = {1-340},
+      doi = {10.1086/190589},
+   adsurl = {http://adsabs.harvard.edu/abs/1979ApJS...40....1K},
+  adsnote = {Provided by the SAO/NASA Astrophysics Data System}
+}','\bibitem[Kurucz(1979)]{1979ApJS...40....1K} Kurucz, R.~L.\ 1979, \apjs, 40,1',0);
+
+UPDATE vars SET value=(select last_insert_rowid()) WHERE name='lastcol';
+
+insert into ATMOSPHY_URLS(MODEL_ID,
+URL,
+MD5_HASH)
+values((select value from vars where name='lastcol'),
+'HTTP://KURUCZ.harvard.edu/grids/gridm05ODFNEW/am05k2odfnew.dat',
+'842bfcd2fd4239e5aaeb3964c563448e');
+
+
+insert into ATMOSPHY_URLS(MODEL_ID,
+URL,
+MD5_HASH)
+values((select value from vars where name='lastcol'),
+'HTTP://KURUCZ.harvard.edu/grids/gridm10ODFNEW/am10k2odfnew.dat',
+'1e89d0fac5750b87688939926ab257c4');
+
+
+insert into ATMOSPHY_URLS(MODEL_ID,
+URL,
+MD5_HASH)
+values((select value from vars where name='lastcol'),
+'HTTP://KURUCZ.harvard.edu/grids/gridm15ODFNEW/am15k2odfnew.dat',
+'9fe4c02f62def88d76ffd13142f4f370');
+
+
+insert into ATMOSPHY_URLS(MODEL_ID,
+URL,
+MD5_HASH)
+values((select value from vars where name='lastcol'),
+'HTTP://KURUCZ.harvard.edu/grids/gridm20ODFNEW/am20k2odfnew.dat',
+'fec2b3ea89820ef356f0d41f9dffb951');
+
+
+insert into ATMOSPHY_URLS(MODEL_ID,
+URL,
+MD5_HASH)
+values((select value from vars where name='lastcol'),
+'HTTP://KURUCZ.harvard.edu/grids/gridm25ODFNEW/am25k2odfnew.dat',
+'ed4941413ef627f4d30c6a82e096626c');
+
+
+insert into ATMOSPHY_URLS(MODEL_ID,
+URL,
+MD5_HASH)
+values((select value from vars where name='lastcol'),
+'HTTP://KURUCZ.harvard.edu/grids/gridP00ODFNEW/ap00k0odfnew.dat',
+'46fbf2a772ac0e6c9148f21076b3c793');
+
+
+insert into ATMOSPHY_URLS(MODEL_ID,
+URL,
+MD5_HASH)
+values((select value from vars where name='lastcol'),
+'HTTP://KURUCZ.harvard.edu/grids/gridP00ODFNEW/ap00k2odfnew.dat',
+'01f7e072ccbde87b40cd7508d693bb0e');
+
+
+insert into ATMOSPHY_URLS(MODEL_ID,
+URL,
+MD5_HASH)
+values((select value from vars where name='lastcol'),
+'HTTP://KURUCZ.harvard.edu/grids/gridP02ODFNEW/ap02k2odfnew.dat',
+'9fb1dabb59f42b5e5170aa1e22100aea');
+
+
+insert into ATMOSPHY_URLS(MODEL_ID,
+URL,
+MD5_HASH)
+values((select value from vars where name='lastcol'),
+'HTTP://KURUCZ.harvard.edu/grids/gridP05ODFNEW/ap05k2odfnew.dat',
+'9450034cd241f882d9b7d0d0750f4bb1');
