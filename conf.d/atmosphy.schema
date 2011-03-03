@@ -645,4 +645,43 @@ values((select value from vars where name='lastcol'),
 '9450034cd241f882d9b7d0d0750f4bb1');
 
 
+--
+--castelli-kurucz (alpha)
+--
+insert into ATMOSPHY_URLS(MODEL_ID, URL, MD5_HASH)
+    values((select value from vars where name='lastcol'),
+    'http://wwwuser.oat.ts.astro.it/castelli/grids/gridp05ak2odfnew/ap05ak2odfnew.dat
+','7593fe97f25835a08ead44c65d7ed6e8');
+insert into ATMOSPHY_URLS(MODEL_ID, URL, MD5_HASH)
+    values((select value from vars where name='lastcol'),
+    'http://wwwuser.oat.ts.astro.it/castelli/grids/gridp02ak2odfnew/ap02ak2odfnew.dat
+','fcb1ee541777b81c3ad014294efcd345');
+insert into ATMOSPHY_URLS(MODEL_ID, URL, MD5_HASH)
+    values((select value from vars where name='lastcol'),
+    'http://wwwuser.oat.ts.astro.it/castelli/grids/gridp00ak2odfnew/ap00ak2odfnew.dat
+','06892d51a42210935249f79dd71a35e0');
+insert into ATMOSPHY_URLS(MODEL_ID, URL, MD5_HASH)
+    values((select value from vars where name='lastcol'),
+    'http://wwwuser.oat.ts.astro.it/castelli/grids/gridm05ak2odfnew/am05ak2odfnew.dat
+','f7b6a3934c4f7761bb84e5b15c3e02b8');
+insert into ATMOSPHY_URLS(MODEL_ID, URL, MD5_HASH)
+    values((select value from vars where name='lastcol'),
+    'http://wwwuser.oat.ts.astro.it/castelli/grids/gridm10ak2odfnew/am10ak2odfnew.dat
+','1fc5945b12962a9da467c8e0d086a4dd');
+insert into ATMOSPHY_URLS(MODEL_ID, URL, MD5_HASH)
+    values((select value from vars where name='lastcol'),
+    'http://wwwuser.oat.ts.astro.it/castelli/grids/gridm15ak2odfnew/am15ak2odfnew.dat
+','e29228fa4fa99f0eb5fdb024bc01ac4c');
+insert into ATMOSPHY_URLS(MODEL_ID, URL, MD5_HASH)
+    values((select value from vars where name='lastcol'),
+    'http://wwwuser.oat.ts.astro.it/castelli/grids/gridm20ak2odfnew/am20ak2odfnew.dat
+','0a94c641432f3a56c0675a377eb27631');
+insert into ATMOSPHY_URLS(MODEL_ID, URL, MD5_HASH)
+    values((select value from vars where name='lastcol'),
+    'http://wwwuser.oat.ts.astro.it/castelli/grids/gridm25ak2odfnew/am25ak2odfnew.dat
+','0432acaf75e0f221c8dbed314c4b47d8');
+insert into ATMOSPHY_URLS(MODEL_ID, URL, MD5_HASH)
+    values((select value from vars where name='lastcol'),
+    'http://wwwuser.oat.ts.astro.it/castelli/grids/gridm40ak2odfnew/am40ak2odfnew.dat
+','034eee3b58c9ad449af00f7463877172');
 
