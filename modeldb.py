@@ -53,8 +53,8 @@ def insertModelData(conn, modelName, dataTuple):
     #dataTuple[-1] = sqlite3.Binary(bz2.compress(pickle.dumps(dataTuple[-1])))
     
     conn.execute(
-        'insert into MODELS (model_id, teff, logg, feh, alpha, k, deck)'
-        'values (?, ?, ?, ?, ?, ?, ?)', tuple(dataTuple))
+        'insert into MODELS (model_id, teff, logg, feh, alpha, k, lh, deck)'
+        'values (?, ?, ?, ?, ?, ?, ?, ?)', tuple(dataTuple))
 
 sqlite3.register_converter("NP_MEMMAP", convertNPMemmap)
 sqlite3.register_converter("BZPKL", convertBzipPickle)

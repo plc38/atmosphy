@@ -7,7 +7,6 @@ create table ATMOSPHY_CONF(
     BIBITEM text,
     ROWS integer default 72,
     COLS integer default 9,
-    LH float,
     INSTALLED integer default 0);
     
 create table ATMOSPHY_URLS(
@@ -25,6 +24,7 @@ create table MODELS(
     FEH float,
     ALPHA float,
     K float,
+    LH float,
     DECK np_memmap,
     foreign key(MODEL_ID) references ATMOSPHY_CONF(ID)
 );

@@ -118,13 +118,13 @@ def importModel(modelName, modelID):
             
             
             #writing to db
-            modeldb.insertModelData(conn, modelName, [modelID, teff, logg, feh, alpha, micro, deck])
+            modeldb.insertModelData(conn, modelName, [modelID, teff, logg, feh, alpha, micro, mixing, deck])
     
     logging.info('Added all decks from model %s to db' % modelName)
     logging.info('Updating the atmosphy_conf table')
     conn.execute('update ATMOSPHY_CONF set rows=?,'
-                 'cols=?, LH=?, INSTALLED=? where ID=?',
-                 (deck.shape[0], deck.shape[1], mixing, 1, modelID))
+                 'cols=?, INSTALLED=? where ID=?',
+                 (deck.shape[0], deck.shape[1], 1, modelID))
     conn.commit()
     conn.close()
     

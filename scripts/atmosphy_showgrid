@@ -1,0 +1,90 @@
+#!/usr/bin/env python
+
+import matplotlib
+matplotlib.use('agg')
+import pylab
+from matplotlib.backends.backend_pdf import PdfPages
+import argparse
+
+import numpy as np
+
+import atmosphy.fileio as fileio
+import atmosphy.modeldb as modeldb
+
+
+
+usage="Usage: %prog modelGridName catalogue [options]"
+
+parser=argparse.ArgumentParser(
+        description="Writes a pdf with different projections of the model grid",)
+
+parser.add_argument("modelName",
+                    help="ModelName to print projections of",
+                    type=str)
+
+parser.add_argument("-o",
+                    "--outfile",
+                    help="Filename to plot the projections to",
+                    default='modelgrid.pdf')
+
+
+def plotProjection(conn, ax, modelName, dim1, dim2):
+
+    modelID = conn.execute('select id from atmosphy_conf where model_name=?', (modelName,)).fetchone()[0]
+    
+    values= np.unique(conn.execute("select %s, %s from models where model_id=%s" % (dim1, dim2, modelID)).fetchall())
+    
+    
+    ax.plot(zip(*values)[0], zip(*values)[1], 'bo')
+    ax.set_xlabel(dim1)
+    ax.set_ylabel(dim2)
+
+
+if __name__ == '__main__':
+    args = parser.parse_args()
+    
+    if args.modelName not in fileio.installedModels():
+        raise ValueError("Model does not exist in DB")
+    else:
+        conn = modeldb.getModelDBConn()
+        pdf = PdfPages(args.outfile)
+        
+        fig = pylab.figure(1)
+        
+        ax = fig.add_subplot(111)
+        plotProjection(conn, ax, args.modelName, 'teff', 'logg')
+        fig.savefig(pdf, format='pdf')
+        fig.clf()
+        
+        ax = fig.add_subplot(111)
+
+        
+        plotProjection(conn, ax, args.modelName, 'teff', 'feh')
+        fig.savefig(pdf, format='pdf')
+        fig.clf()
+        
+        ax = fig.add_subplot(111)
+
+        
+        plotProjection(conn, ax, args.modelName, 'logg', 'feh')
+        fig.savefig(pdf, format='pdf')
+        fig.clf()
+        
+        ax = fig.add_subplot(111)
+
+        
+        plotProjection(conn, ax, args.modelName, 'teff', 'alpha')
+        fig.savefig(pdf, format='pdf')
+        fig.clf()
+        
+        ax = fig.add_subplot(111)
+
+        
+        plotProjection(conn, ax, args.modelName, 'alpha', 'feh')
+        fig.savefig(pdf, format='pdf')
+        fig.clf()
+        
+        
+        pdf.close()
+        
+        conn.close()
