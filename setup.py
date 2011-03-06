@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from distutils.core import setup
-import setuptools
+
 
 try: # Python 3.x
     from distutils.command.build_py import build_py_2to3 as build_py
@@ -17,10 +17,10 @@ setup(name='atmosphy',
         acasey@mso.anu.edu.au',
       url='',
       packages = ['atmosphy'],
-      package_dir = {'atmosphy':'./'},
+      package_dir = {'atmosphy':'.'},
+      package_data = {'atmosphy':['conf.d/atmosphy.schema',]},
       cmdclass = {'build_py':build_py},
-      data_files = [('conf.d', ['conf.d/atmosphy.schema', 'conf.d/config.ini'])],
-      scripts=['scripts/atmosphy', 'scripts/atmosphy_getgrid'],
+      scripts=['scripts/atmosphy', 'scripts/atmosphy_getgrid', 'scripts/atmosphy_stromlo'],
       install_requires = ['argparse>=1.1'],#, 'scipy>=0.9.0rc5'],
       test_suite = 'nose.collector'
      )

@@ -7,40 +7,44 @@ usage="Usage: %prog teff logg feh [options]"
 parser=argparse.ArgumentParser(description='Interpolate stellar atmospheres for usage in spectrum synthesis codes like MOOG.')
 #parser = OptionParser(usage=usage)
 parser.add_argument("-teff",
-					help="Effective Temperature\
-					 of the required model. A range can be specified by giving 3 numbers (start,end, step).",
-                                        nargs='+',
-                                        default=5780,
-					 type=float)
+                    help="Effective Temperature\
+                    of the required model. A range can be specified by giving 3 numbers (start,end, step)."
+                    "\ne.g. -teff 5000 6000 100",
+                    nargs='+',
+                    default=5780,
+                     type=float)
 
 parser.add_argument("-logg",
-					help="Surface Gravity (log(g))\
-					 of the required model. A range can be specified by giving 3 numbers (start,end, step).",
-                                        nargs='+',
-                                        default=4.4,
-					 type=float)
+                    help="Surface Gravity (log(g))\
+                    of the required model. A range can be specified by giving 3 numbers (start,end, step)."
+                    "\ne.g. -logg 3.5 4.5 0.1",
+                    nargs='+',
+                    default=4.4,
+                    type=float)
 
 parser.add_argument("-feh",
-					help="Metallicity [Fe/H]\
-					 of the required model. A range can be specified by giving 3 numbers (start,end, step).",
-                                        nargs='+',
-                                        default=0.0,
-					 type=float)
-					 
-parser.add_argument("-k","--microturb",
-					help="Micro turbulence \
-					in km/s default = %(default).1f",
-					 type=float,
-					 dest='k',
-					 default=2.0)
-					 
+                    help="Metallicity [Fe/H]\
+                     of the required model. A range can be specified by giving 3 numbers (start,end, step)."
+                    "\ne.g. -feh -2 -1 0.1",
+                    nargs='+',
+                    default=0.0,
+                     type=float)
+                     
+
+#parser.add_argument("-k","--microturb",
+#                    help="Micro turbulence \
+#                    in km/s default = %(default).1f",
+#                     type=float,
+#                     dest='k',
+#                     default=2.0)
+
 parser.add_argument("-a","--alpha",
-					help="Enhancement with \
-					 alpha elements (e.g. C,N,O) \
-					 default = %(default).1f",
-					 type=float,
-					 dest='alpha',
-					 default=0.0)
+                    help="Enhancement with \
+                    alpha elements (e.g. C,N,O) \
+                    default = %(default).1f",
+                    type=float,
+                    dest='alpha',
+                    default=0.0)
 
 
 parser.add_argument("--modelgrid",
@@ -56,7 +60,7 @@ parser.add_argument("-o", "--outfile",
 
 if __name__ == '__main__':
     args = parser.parse_args()
-    
+    args.k = 2.0
     import sys
     import re
     import itertools
@@ -75,7 +79,7 @@ if __name__ == '__main__':
     
     params = []
     
-    for paramName in ['teff', 'logg', 'feh']:
+    for paramName in ['teff', 'logg', 'feh', 'alpha']:
         param = args.__dict__[paramName]
         if not np.iterable(param):
             params.append([param])
@@ -86,22 +90,23 @@ if __name__ == '__main__':
         else:
             raise ValueError("Please give 1 number or 3 numbers for a range.")
         
-    
+
     #running the grid
     paramGrid = itertools.product(*params)
     for param in paramGrid:
         #creating a new filename
         if args.fname == None or len(paramGrid) > 1:
-            fname = 't%dg%.2fm%.2fk%.2fa%.2f.model'%(param[0], param[1], param[2], args.k, args.alpha)
+            fname = 't%dg%.2fm%.2fk%.2fa%.2f.model'%(param[0], param[1], param[2], args.k, params[3])
         else:
             fname = args.fname
         print 'Creating file %s' %fname
         try:
-            deck = ainterp.interpModelGrid(args.modelgrid, param[0], param[1], param[2], args.k, args.alpha)
+            deck = ainterp.interpModelGrid(args.modelgrid, param[0], param[1], param[2], args.k, params[3])
         except ainterp.OutOfBoundsError:
             warningMsg = ("Warning: Could not create atmosphere with Teff %.2f logg %.2f [Fe/H] %.2f micro %.2f alpha %.2f. \n"
                     "The requested point lies outside the grid of model atmospheres")
-            print warningMsg % (param[0], param[1], param[2], args.k, args.alpha)
+            print warningMsg % (param[0], param[1], param[2], args.k, params[3])
+            continue
                 
         formattedDeck = fileio.formatMOOG(param[0], param[1], param[2], deck)
 
