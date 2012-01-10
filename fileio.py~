@@ -279,7 +279,7 @@ def formatMOOG(Teff, logg, FeH, deck):
         
         # Since columns 1 and 2 have different formatting, then all the rest have the same
         # we will fill the rest
-        tempLine = "% 2.8E% 9.1f" + (len(line) - 2) * "% 2.3E" + "\n"
+        tempLine = "% 2.8E% 9.1E" + (len(line) - 2) * "% 2.3E" + "\n"
         #tempLine = " %1.8E" +  " " * (9 - len(str(line[1]))) + "%5.1f" + " %1.3E" * (len(line) - 2) + "\n"
         content += tempLine % tuple(line,)
         
